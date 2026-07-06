@@ -3,10 +3,12 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { signInWithEmailAndPassword } from "firebase/auth";
-import { auth, firebaseYapilandirildi } from "@/lib/firebaseClient";
+import { doc, getDoc } from "firebase/firestore";
+import { auth, db, firebaseYapilandirildi } from "@/lib/firebaseClient";
 import { useAuthStore } from "@/store/authStore";
 import { MOCK_KULLANICILAR } from "@/data/mockData";
 import Buton from "@/components/ui/Buton";
+import type { Rol } from "@/types";
 
 export default function GirisSayfasi() {
   const router = useRouter();
@@ -25,14 +27,20 @@ export default function GirisSayfasi() {
     try {
       if (firebaseYapilandirildi) {
         const sonuc = await signInWithEmailAndPassword(auth, eposta, sifre);
-        // TODO: Firestore'da "profiles" koleksiyonunda (belge id = kullanıcının uid'si)
-        // gerçek rol/ad bilgisini tutup burada çekmelisin. Şimdilik oturum açan
-        // kullanıcıyı 'personel' rolüyle giriş yaptırıyoruz.
+
+        // "profiles" koleksiyonunda bu kullanıcının uid'si ile eşleşen belgeyi ara.
+        // Belge yoksa (henüz Firestore'da profil oluşturulmadıysa) güvenli varsayılan
+        // olarak 'personel' rolüyle devam et.
+        const profilBelgesi = await getDoc(doc(db, "profiles", sonuc.user.uid));
+        const profil = profilBelgesi.exists() ? profilBelgesi.data() : null;
+
         girisYap({
           id: sonuc.user.uid,
-          adSoyad: sonuc.user.email?.split("@")[0] || "Kullanıcı",
+          adSoyad: (profil?.adSoyad as string) || sonuc.user.email?.split("@")[0] || "Kullanıcı",
           eposta: sonuc.user.email || eposta,
-          rol: "personel"
+          rol: (profil?.rol as Rol) || "personel",
+          magazaId: profil?.magazaId as string | undefined,
+          bolgeId: profil?.bolgeId as string | undefined
         });
       } else {
         // Firebase henüz bağlanmadı: demo modu, mock kullanıcılardan e-postaya göre eşle.
