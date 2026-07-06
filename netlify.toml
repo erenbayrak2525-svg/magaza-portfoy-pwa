@@ -1,7 +1,0 @@
-[build]
-  command = "npm run build"
-  publish = "out"
-
-# NOT: Netlify kökte yayınlar, GitHub Pages gibi alt yol gerektirmez.
-# Bu yüzden NEXT_PUBLIC_BASE_PATH ortam değişkenini Netlify'de HİÇ tanımlama
-# (Site settings > Environment variables kısmına eklemeyin).
