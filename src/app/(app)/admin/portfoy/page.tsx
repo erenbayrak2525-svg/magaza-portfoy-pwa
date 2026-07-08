@@ -5,8 +5,17 @@ import Link from "next/link";
 import { MOCK_MAGAZALAR } from "@/data/mockData";
 import Kart from "@/components/ui/Kart";
 import Buton from "@/components/ui/Buton";
+import AdminKorumasi from "@/components/AdminKorumasi";
 
 export default function PortfoyYonetimiSayfasi() {
+  return (
+    <AdminKorumasi>
+      <PortfoyYonetimiIcerik />
+    </AdminKorumasi>
+  );
+}
+
+function PortfoyYonetimiIcerik() {
   const [formAcik, setFormAcik] = useState(false);
   const [ad, setAd] = useState("");
   const [kod, setKod] = useState("");

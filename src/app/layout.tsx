@@ -7,7 +7,8 @@ export const metadata: Metadata = {
   description: "Saha ekipleri ve mağaza portföyü için operasyonel yönetim uygulaması",
   manifest: "./manifest.webmanifest",
   icons: {
-    icon: "./icons/icon-192.png",
+    icon: ["./favicon.png", "./icons/icon-192.png"],
+    shortcut: "./favicon.png",
     apple: "./icons/icon-192.png"
   }
 };

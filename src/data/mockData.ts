@@ -1,4 +1,4 @@
-import type { Bildirim, CiroKaydi, Gorev, IletisimKisi, Kullanici, Magaza } from "@/types";
+import type { Bildirim, CiroKaydi, Gorev, IletisimKisi, Kullanici, Magaza, StokUrunu } from "@/types";
 
 // NOT: Aşağıdaki mağaza isimleri ve adresleri yer tutucudur (Wasmoda e-ticaret
 // platformu olduğu için gerçek şube bilgisi bilinmiyor). Gerçek fiziksel
@@ -110,4 +110,31 @@ export const MOCK_ILETISIM: IletisimKisi[] = [
 export const MOCK_BILDIRIMLER: Bildirim[] = [
   { id: "b1", baslik: "Yeni Görev: Vitrin Değişimi", mesaj: "Alsancak mağazası için yeni görev atandı.", tarih: "2026-07-05T09:10:00", okundu: false, link: "/gorevler/detay?id=g1" },
   { id: "b2", baslik: "Duyuru", mesaj: "Bu hafta sonu stok sayımı tüm mağazalarda yapılacaktır.", tarih: "2026-07-04T17:30:00", okundu: true }
+];
+
+export const MOCK_STOK_URUNLERI: StokUrunu[] = [
+  {
+    id: "su1",
+    urunKodu: "WSM-BLZ-014",
+    urunAdi: "Keten Blazer Ceket - Krem",
+    adet: 24,
+    etiketler: ["yeni sezon", "keten"],
+    guncellemeTarihi: "2026-07-05"
+  },
+  {
+    id: "su2",
+    urunKodu: "WSM-ELB-102",
+    urunAdi: "Midi Elbise - Siyah",
+    adet: 8,
+    etiketler: ["çok satan"],
+    guncellemeTarihi: "2026-07-04"
+  },
+  {
+    id: "su3",
+    urunKodu: "WSM-CNT-030",
+    urunAdi: "Deri Çanta - Taba",
+    adet: 0,
+    etiketler: ["stok tükendi", "aksesuar"],
+    guncellemeTarihi: "2026-07-03"
+  }
 ];

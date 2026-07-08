@@ -7,10 +7,19 @@ import { kuyruguSenkronEt } from "@/lib/senkron";
 import { useCevrimici } from "@/lib/useCevrimici";
 import Kart from "@/components/ui/Kart";
 import Buton from "@/components/ui/Buton";
+import AdminKorumasi from "@/components/AdminKorumasi";
 
 const PERSONEL_LISTESI = MOCK_KULLANICILAR.filter((k) => k.rol === "personel");
 
 export default function GorevAtamaSayfasi() {
+  return (
+    <AdminKorumasi>
+      <GorevAtamaIcerik />
+    </AdminKorumasi>
+  );
+}
+
+function GorevAtamaIcerik() {
   const cevrimici = useCevrimici();
   const [magazaId, setMagazaId] = useState(MOCK_MAGAZALAR[0]?.id ?? "");
   const [personelId, setPersonelId] = useState(PERSONEL_LISTESI[0]?.id ?? "");

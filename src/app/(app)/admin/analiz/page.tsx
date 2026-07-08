@@ -2,12 +2,21 @@
 
 import { MOCK_CIRO_KAYITLARI, MOCK_MAGAZALAR, MOCK_GOREVLER } from "@/data/mockData";
 import Kart from "@/components/ui/Kart";
+import AdminKorumasi from "@/components/AdminKorumasi";
 
 function paraFormatla(n: number) {
   return n.toLocaleString("tr-TR", { style: "currency", currency: "TRY", maximumFractionDigits: 0 });
 }
 
 export default function AnalizSayfasi() {
+  return (
+    <AdminKorumasi>
+      <AnalizIcerik />
+    </AdminKorumasi>
+  );
+}
+
+function AnalizIcerik() {
   const maxCiro = Math.max(...MOCK_CIRO_KAYITLARI.map((c) => c.tutar));
   const toplamGorev = MOCK_GOREVLER.length;
   const tamamlanan = MOCK_GOREVLER.filter((g) => g.durum === "tamamlandi").length;

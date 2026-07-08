@@ -62,6 +62,7 @@ eklendiğinde otomatik oluşur. Uygulamanın kullandığı koleksiyon isimleri:
 | `ciro_kayitlari` | Günlük ciro girişleri |
 | `stok_sayim_kayitlari` | Stok sayım kayıtları |
 | `denetim_formlari` | Periyodik denetim formları |
+| `stok_urunleri` | Ürün stok kataloğu (kod, ad, adet, görsel, etiketler) |
 
 `profiles` koleksiyonuna her kullanıcı için elle bir belge ekle (belge ID'si = Authentication'da
 o kullanıcının **uid**'si, Users listesinden kopyalanabilir):
@@ -145,6 +146,17 @@ Görev atandığında personele push bildirimi gitmesi için:
 4. `src/app/(app)/admin/gorev-atama/page.tsx` içindeki TODO'da işaretlenen yere bu
    fonksiyonu çağıran bir çağrı eklenir.
 5. Bana bu aşamada tekrar yazarsan Cloud Function + FCM kurulumunu birlikte yaparız.
+
+## Stok Kataloğu modülü
+
+- **Admin → Stok İçe Aktar (HTML):** ERP/Nebim'den kopyaladığın HTML rapor kaynağını
+  (bir `<table>` içermeli) yapıştırıp önizle, sütunları (Kod/Ad/Adet) eşleştir, içe aktar.
+  Bu sadece admin rolünde açık (`AdminKorumasi` ile korunuyor).
+- **Stok Kataloğu (`/stok`):** Tüm giriş yapmış kullanıcılar görebilir. Bir ürüne tıklayınca
+  herkes görsel ekleyebilir/değiştirebilir ve etiket ekleyip silebilir — rol farkı yok.
+- Görseller şu an base64 olarak Firestore belgesine yazılıyor (basit ama Firestore'un ~1MB
+  belge sınırına takılabilir). İleride Firebase Storage'a taşımak istersen
+  `src/app/(app)/stok/detay/page.tsx` içindeki TODO'ya bak.
 
 ## Klasör yapısı
 

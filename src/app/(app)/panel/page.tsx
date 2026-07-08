@@ -142,6 +142,18 @@ export default function PanelSayfasi() {
                 <p className="text-sm font-medium">Tüm Görevler</p>
               </Kart>
             </Link>
+            <Link href="/stok">
+              <Kart className="text-center">
+                <p className="text-2xl mb-1">🏷️</p>
+                <p className="text-sm font-medium">Stok Kataloğu</p>
+              </Kart>
+            </Link>
+            <Link href="/admin/stok-yukle">
+              <Kart className="text-center">
+                <p className="text-2xl mb-1">📥</p>
+                <p className="text-sm font-medium">Stok İçe Aktar (HTML)</p>
+              </Kart>
+            </Link>
           </div>
 
           <section>

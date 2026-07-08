@@ -88,6 +88,16 @@ export interface IletisimKisi {
   magazaId?: string;
 }
 
+export interface StokUrunu {
+  id: string;
+  urunKodu: string;
+  urunAdi: string;
+  adet: number;
+  gorselUrl?: string;
+  etiketler: string[];
+  guncellemeTarihi: string;
+}
+
 export interface Bildirim {
   id: string;
   baslik: string;
