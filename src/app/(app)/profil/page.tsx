@@ -11,7 +11,7 @@ import Buton from "@/components/ui/Buton";
 
 const ROL_ETIKET: Record<string, string> = {
   personel: "Personel",
-  bolge_muduru: "Bölge Müdürü",
+  bolge_muduru: "Müdür",
   admin: "Yönetici (Admin)"
 };
 

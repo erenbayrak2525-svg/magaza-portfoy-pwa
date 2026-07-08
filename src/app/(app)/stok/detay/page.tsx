@@ -3,6 +3,7 @@
 import { useState, useRef, Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { MOCK_STOK_URUNLERI } from "@/data/mockData";
+import { stokToplamAdet } from "@/types";
 import { kuyrugaEkle } from "@/lib/outbox";
 import { kuyruguSenkronEt } from "@/lib/senkron";
 import { useCevrimici } from "@/lib/useCevrimici";
@@ -88,7 +89,33 @@ function StokDetayIcerik() {
       <Kart>
         <p className="font-semibold text-sm">{urun.urunAdi}</p>
         <p className="text-xs text-gray-500 font-mono mt-0.5">{urun.urunKodu}</p>
-        <p className="text-sm font-semibold mt-2">{urun.adet} adet stokta</p>
+        <p className="text-sm font-semibold mt-2">{stokToplamAdet(urun)} adet stokta</p>
+      </Kart>
+
+      <Kart className="overflow-x-auto">
+        <p className="text-sm font-medium mb-3">Renk / Beden Dağılımı</p>
+        <table className="w-full text-xs">
+          <thead>
+            <tr className="border-b border-line text-left text-gray-500">
+              <th className="pb-2 pr-3">Renk</th>
+              <th className="pb-2 pr-3">Beden</th>
+              <th className="pb-2">Adet</th>
+            </tr>
+          </thead>
+          <tbody>
+            {urun.varyantlar.map((v, i) => (
+              <tr key={i} className="border-b border-line last:border-0">
+                <td className="py-1.5 pr-3">{v.renk}</td>
+                <td className="py-1.5 pr-3">{v.beden}</td>
+                <td className="py-1.5 font-medium">{v.adet}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+        <p className="text-[11px] text-gray-400 mt-3">
+          Bu tablo Admin'in Stok İçe Aktar (HTML) ile yüklediği Nebim raporundan gelir; burada
+          değiştirilemez.
+        </p>
       </Kart>
 
       <Kart>

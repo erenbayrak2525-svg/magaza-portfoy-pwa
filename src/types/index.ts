@@ -88,14 +88,24 @@ export interface IletisimKisi {
   magazaId?: string;
 }
 
+export interface StokVaryanti {
+  renk: string;
+  beden: string;
+  adet: number;
+}
+
 export interface StokUrunu {
   id: string;
-  urunKodu: string;
-  urunAdi: string;
-  adet: number;
+  urunKodu: string;          // ör. "7026" (ürün adının başındaki stil numarası)
+  urunAdi: string;           // ör. "XLO Dikişli Paça Bol Paça Pantolon"
+  varyantlar: StokVaryanti[]; // her renk+beden kombinasyonu için ayrı stok adedi
   gorselUrl?: string;
   etiketler: string[];
   guncellemeTarihi: string;
+}
+
+export function stokToplamAdet(urun: StokUrunu): number {
+  return urun.varyantlar.reduce((toplam, v) => toplam + v.adet, 0);
 }
 
 export interface Bildirim {

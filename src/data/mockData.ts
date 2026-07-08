@@ -102,7 +102,7 @@ export const MOCK_CIRO_KAYITLARI: CiroKaydi[] = [
 ];
 
 export const MOCK_ILETISIM: IletisimKisi[] = [
-  { id: "i1", adSoyad: "Deniz Aydın", rol: "Bölge Müdürü", telefon: "+905551112233", whatsapp: "+905551112233" },
+  { id: "i1", adSoyad: "Deniz Aydın", rol: "Müdür", telefon: "+905551112233", whatsapp: "+905551112233" },
   { id: "i2", adSoyad: "Merkez Destek Hattı", rol: "Destek", telefon: "+902323334455" },
   { id: "i3", adSoyad: "Teknik Servis", rol: "Teknik", telefon: "+905559998877", whatsapp: "+905559998877" }
 ];
@@ -115,25 +115,33 @@ export const MOCK_BILDIRIMLER: Bildirim[] = [
 export const MOCK_STOK_URUNLERI: StokUrunu[] = [
   {
     id: "su1",
-    urunKodu: "WSM-BLZ-014",
-    urunAdi: "Keten Blazer Ceket - Krem",
-    adet: 24,
+    urunKodu: "7026",
+    urunAdi: "XLO Dikişli Paça Bol Paça Pantolon",
+    varyantlar: [
+      { renk: "Siyah", beden: "36", adet: 4 },
+      { renk: "Siyah", beden: "38", adet: 6 },
+      { renk: "Açık Mavi", beden: "36", adet: 2 },
+      { renk: "Açık Mavi", beden: "38", adet: 3 }
+    ],
     etiketler: ["yeni sezon", "keten"],
     guncellemeTarihi: "2026-07-05"
   },
   {
     id: "su2",
-    urunKodu: "WSM-ELB-102",
-    urunAdi: "Midi Elbise - Siyah",
-    adet: 8,
+    urunKodu: "5102",
+    urunAdi: "Midi Elbise",
+    varyantlar: [
+      { renk: "Siyah", beden: "S", adet: 3 },
+      { renk: "Siyah", beden: "M", adet: 5 }
+    ],
     etiketler: ["çok satan"],
     guncellemeTarihi: "2026-07-04"
   },
   {
     id: "su3",
-    urunKodu: "WSM-CNT-030",
-    urunAdi: "Deri Çanta - Taba",
-    adet: 0,
+    urunKodu: "3030",
+    urunAdi: "Deri Çanta",
+    varyantlar: [{ renk: "Taba", beden: "Standart", adet: 0 }],
     etiketler: ["stok tükendi", "aksesuar"],
     guncellemeTarihi: "2026-07-03"
   }

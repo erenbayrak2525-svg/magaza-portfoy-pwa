@@ -149,14 +149,21 @@ Görev atandığında personele push bildirimi gitmesi için:
 
 ## Stok Kataloğu modülü
 
-- **Admin → Stok İçe Aktar (HTML):** ERP/Nebim'den kopyaladığın HTML rapor kaynağını
-  (bir `<table>` içermeli) yapıştırıp önizle, sütunları (Kod/Ad/Adet) eşleştir, içe aktar.
-  Bu sadece admin rolünde açık (`AdminKorumasi` ile korunuyor).
+- **Admin → Stok İçe Aktar (HTML):** Nebim V3'ten "HTML olarak kaydet" ile aldığın envanter
+  raporunu (birkaç MB olabilir) **dosya olarak seç** — yapıştırma kutusu da var ama büyük
+  dosyalarda dosya seçmek çok daha hızlı ve güvenilir. Sistem raporu otomatik ayrıştırır:
+  ürün adının başındaki stil numarasını ("7026" gibi) ürün kodu olarak, kalan kısmı ürün adı
+  olarak alır; her renk+beden satırını o ürünün varyant listesine ekler. Önizlemeyi kontrol
+  edip **İçe Aktar**'a basınca Firestore'a yazılır. Bu sadece admin rolünde açık.
 - **Stok Kataloğu (`/stok`):** Tüm giriş yapmış kullanıcılar görebilir. Bir ürüne tıklayınca
-  herkes görsel ekleyebilir/değiştirebilir ve etiket ekleyip silebilir — rol farkı yok.
+  renk/beden/adet dağılımını (salt okunur, Nebim'den gelir) görür; **herkes** o ürüne görsel
+  ekleyebilir/değiştirebilir ve etiket ekleyip silebilir — rol farkı yok.
 - Görseller şu an base64 olarak Firestore belgesine yazılıyor (basit ama Firestore'un ~1MB
   belge sınırına takılabilir). İleride Firebase Storage'a taşımak istersen
   `src/app/(app)/stok/detay/page.tsx` içindeki TODO'ya bak.
+- Ayrıştırma mantığı `src/lib/htmlStokParse.ts` içinde. Nebim rapor şablonun farklıysa
+  (sütun sırası, başlık isimleri) bu dosyadaki `nebimStokAyristir` fonksiyonunu güncellemen
+  gerekebilir.
 
 ## Klasör yapısı
 

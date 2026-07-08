@@ -1,7 +1,12 @@
 "use client";
 
-import { useState } from "react";
-import { htmlTabloAyristir, sutunTahminEt, urunKoduBelgeId, type AyristirilmisTablo } from "@/lib/htmlStokParse";
+import { useRef, useState } from "react";
+import {
+  nebimStokAyristir,
+  satirlariUrunlereGrupla,
+  urunKoduBelgeId,
+  type GruplanmisUrun
+} from "@/lib/htmlStokParse";
 import { kuyrugaEkle } from "@/lib/outbox";
 import { kuyruguSenkronEt } from "@/lib/senkron";
 import { useCevrimici } from "@/lib/useCevrimici";
@@ -20,56 +25,76 @@ export default function StokYukleSayfasi() {
 
 function StokYukleIcerik() {
   const cevrimici = useCevrimici();
-  const [htmlMetni, setHtmlMetni] = useState("");
-  const [tablo, setTablo] = useState<AyristirilmisTablo | null>(null);
-  const [kodSutunu, setKodSutunu] = useState(-1);
-  const [adSutunu, setAdSutunu] = useState(-1);
-  const [adetSutunu, setAdetSutunu] = useState(-1);
+  // Not: HTML metnini React state'inde tutmuyoruz (bazı Nebim raporları 10+ MB olabiliyor,
+  // her tuş vuruşunda/renderda bu kadar büyük bir stringi state'te tutmak tarayıcıyı yavaşlatır).
+  // Sadece ayrıştırma sonucu (ürün listesi) state'te tutuluyor.
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const dosyaInputRef = useRef<HTMLInputElement>(null);
+
+  const [urunler, setUrunler] = useState<GruplanmisUrun[]>([]);
+  const [toplamSatir, setToplamSatir] = useState(0);
   const [hata, setHata] = useState<string | null>(null);
+  const [dosyaOkunuyor, setDosyaOkunuyor] = useState(false);
   const [aktariliyor, setAktariliyor] = useState(false);
+  const [ilerleme, setIlerleme] = useState({ yapilan: 0, toplam: 0 });
   const [durumMesaji, setDurumMesaji] = useState<string | null>(null);
 
-  function onizle() {
+  function htmlIsle(html: string) {
     setHata(null);
     setDurumMesaji(null);
-    const sonuc = htmlTabloAyristir(htmlMetni);
-    if (!sonuc) {
-      setHata("Yapıştırılan içerikte bir <table> bulunamadı. Nebim/ERP'den kopyaladığın HTML kaynağının tamamını yapıştırdığından emin ol.");
-      setTablo(null);
+    const satirlar = nebimStokAyristir(html);
+    if (satirlar.length === 0) {
+      setHata(
+        "Ayrıştırılabilir veri satırı bulunamadı. Nebim V3'ten aldığın HTML raporunun tamamını seçtiğinden/yapıştırdığından emin ol."
+      );
+      setUrunler([]);
       return;
     }
-    const tahmin = sutunTahminEt(sonuc.basliklar);
-    setKodSutunu(tahmin.kod);
-    setAdSutunu(tahmin.ad);
-    setAdetSutunu(tahmin.adet);
-    setTablo(sonuc);
+    setToplamSatir(satirlar.length);
+    setUrunler(satirlariUrunlereGrupla(satirlar));
+  }
+
+  function dosyaSecildi(e: React.ChangeEvent<HTMLInputElement>) {
+    const dosya = e.target.files?.[0];
+    if (!dosya) return;
+    setDosyaOkunuyor(true);
+    const okuyucu = new FileReader();
+    okuyucu.onload = () => {
+      htmlIsle((okuyucu.result as string) || "");
+      setDosyaOkunuyor(false);
+    };
+    okuyucu.onerror = () => {
+      setHata("Dosya okunamadı.");
+      setDosyaOkunuyor(false);
+    };
+    okuyucu.readAsText(dosya, "utf-8");
+  }
+
+  function textareaOnizle() {
+    htmlIsle(textareaRef.current?.value || "");
   }
 
   async function iceAktar() {
-    if (!tablo || kodSutunu < 0) return;
+    if (urunler.length === 0) return;
     setAktariliyor(true);
     setDurumMesaji(null);
+    setIlerleme({ yapilan: 0, toplam: urunler.length });
     try {
       const tarih = new Date().toISOString().slice(0, 10);
-      let gecerliSatir = 0;
-      for (const satir of tablo.satirlar) {
-        const kod = satir[kodSutunu]?.trim();
-        if (!kod) continue;
-        const ad = adSutunu >= 0 ? satir[adSutunu]?.trim() || kod : kod;
-        const adetHam = adetSutunu >= 0 ? satir[adetSutunu] : "0";
-        const adet = Number((adetHam || "0").replace(/[^\d.-]/g, "")) || 0;
-
+      let i = 0;
+      for (const urun of urunler) {
         await kuyrugaEkle({
           tip: "stok_urun_ice_aktar",
           payload: {
-            id: urunKoduBelgeId(kod),
-            urunKodu: kod,
-            urunAdi: ad,
-            adet,
+            id: urunKoduBelgeId(urun.kod),
+            urunKodu: urun.kod,
+            urunAdi: urun.ad,
+            varyantlar: urun.varyantlar,
             guncellemeTarihi: tarih
           }
         });
-        gecerliSatir += 1;
+        i += 1;
+        if (i % 20 === 0 || i === urunler.length) setIlerleme({ yapilan: i, toplam: urunler.length });
       }
 
       if (cevrimici) {
@@ -77,17 +102,21 @@ function StokYukleIcerik() {
         setDurumMesaji(
           sonuc.basarili > 0
             ? `${sonuc.basarili} ürün içe aktarıldı.`
-            : `${gecerliSatir} ürün kaydedildi, senkron bekleniyor.`
+            : `${urunler.length} ürün kaydedildi, senkron bekleniyor.`
         );
       } else {
-        setDurumMesaji(`Çevrimdışısın: ${gecerliSatir} ürün kaydedildi, bağlantı gelince gönderilecek.`);
+        setDurumMesaji(`Çevrimdışısın: ${urunler.length} ürün kaydedildi, bağlantı gelince gönderilecek.`);
       }
-      setHtmlMetni("");
-      setTablo(null);
+      setUrunler([]);
+      setToplamSatir(0);
+      if (textareaRef.current) textareaRef.current.value = "";
+      if (dosyaInputRef.current) dosyaInputRef.current.value = "";
     } finally {
       setAktariliyor(false);
     }
   }
+
+  const toplamAdet = urunler.reduce((t, u) => t + u.varyantlar.reduce((a, v) => a + v.adet, 0), 0);
 
   return (
     <div className="space-y-4">
@@ -100,18 +129,31 @@ function StokYukleIcerik() {
       )}
 
       <Kart>
-        <p className="text-sm font-medium mb-2">HTML Kaynağı Yapıştır</p>
+        <p className="text-sm font-medium mb-2">Nebim V3 Rapor Dosyası (önerilen)</p>
         <p className="text-xs text-gray-500 mb-3">
-          Nebim/ERP'den aldığın stok raporunun HTML kaynağını (bir &lt;table&gt; içermeli) buraya olduğu gibi yapıştır.
+          Nebim'den "HTML olarak kaydet" ile aldığın raporu doğrudan seç — büyük dosyalarda
+          (birkaç MB) bu, yapıştırmaktan çok daha hızlı ve güvenilirdir.
         </p>
+        <input
+          ref={dosyaInputRef}
+          type="file"
+          accept=".html,.htm,text/html"
+          onChange={dosyaSecildi}
+          className="text-sm w-full"
+        />
+        {dosyaOkunuyor && <p className="text-xs text-gray-500 mt-2">Dosya okunuyor…</p>}
+      </Kart>
+
+      <Kart>
+        <p className="text-sm font-medium mb-2">Veya HTML Kaynağı Yapıştır</p>
+        <p className="text-xs text-gray-500 mb-3">Küçük/kısa bir rapor parçası için kullanışlıdır.</p>
         <textarea
-          value={htmlMetni}
-          onChange={(e) => setHtmlMetni(e.target.value)}
-          rows={8}
+          ref={textareaRef}
+          rows={6}
           placeholder="<table>...</table>"
           className="focus-ring w-full rounded-xl border border-line px-3.5 py-2.5 text-xs font-mono"
         />
-        <Buton varyant="ikincil" tamGenislik className="mt-3" onClick={onizle} disabled={!htmlMetni.trim()}>
+        <Buton varyant="ikincil" tamGenislik className="mt-3" onClick={textareaOnizle}>
           Önizle
         </Buton>
       </Kart>
@@ -122,36 +164,32 @@ function StokYukleIcerik() {
         </Kart>
       )}
 
-      {tablo && (
+      {urunler.length > 0 && (
         <>
           <Kart>
-            <p className="text-sm font-medium mb-3">Sütun Eşleme ({tablo.satirlar.length} satır bulundu)</p>
-            <div className="space-y-3">
-              <SutunSecici etiket="Ürün Kodu sütunu" basliklar={tablo.basliklar} deger={kodSutunu} onDegisim={setKodSutunu} />
-              <SutunSecici etiket="Ürün Adı sütunu" basliklar={tablo.basliklar} deger={adSutunu} onDegisim={setAdSutunu} />
-              <SutunSecici etiket="Adet sütunu" basliklar={tablo.basliklar} deger={adetSutunu} onDegisim={setAdetSutunu} />
-            </div>
-            {kodSutunu < 0 && (
-              <p className="text-xs text-signal-late mt-2">Devam etmek için en azından Ürün Kodu sütununu seçmelisin.</p>
-            )}
+            <p className="text-sm font-medium">
+              {urunler.length} ürün · {toplamSatir} varyant satırı · {toplamAdet} adet toplam
+            </p>
           </Kart>
 
           <Kart className="overflow-x-auto">
-            <p className="text-sm font-medium mb-3">Önizleme (ilk 8 satır)</p>
+            <p className="text-sm font-medium mb-3">Önizleme (ilk 15 ürün)</p>
             <table className="w-full text-xs">
               <thead>
                 <tr className="border-b border-line text-left text-gray-500">
                   <th className="pb-2 pr-3">Kod</th>
                   <th className="pb-2 pr-3">Ad</th>
-                  <th className="pb-2">Adet</th>
+                  <th className="pb-2 pr-3">Varyant</th>
+                  <th className="pb-2">Toplam Adet</th>
                 </tr>
               </thead>
               <tbody>
-                {tablo.satirlar.slice(0, 8).map((satir, i) => (
-                  <tr key={i} className="border-b border-line last:border-0">
-                    <td className="py-1.5 pr-3 font-mono">{kodSutunu >= 0 ? satir[kodSutunu] : "—"}</td>
-                    <td className="py-1.5 pr-3">{adSutunu >= 0 ? satir[adSutunu] : "—"}</td>
-                    <td className="py-1.5">{adetSutunu >= 0 ? satir[adetSutunu] : "—"}</td>
+                {urunler.slice(0, 15).map((u) => (
+                  <tr key={u.kod} className="border-b border-line last:border-0">
+                    <td className="py-1.5 pr-3 font-mono">{u.kod}</td>
+                    <td className="py-1.5 pr-3">{u.ad}</td>
+                    <td className="py-1.5 pr-3">{u.varyantlar.length}</td>
+                    <td className="py-1.5">{u.varyantlar.reduce((a, v) => a + v.adet, 0)}</td>
                   </tr>
                 ))}
               </tbody>
@@ -164,41 +202,19 @@ function StokYukleIcerik() {
             </Kart>
           )}
 
-          <Buton tamGenislik onClick={iceAktar} disabled={aktariliyor || kodSutunu < 0}>
-            {aktariliyor ? "İçe aktarılıyor…" : `${tablo.satirlar.length} Ürünü İçe Aktar`}
+          {aktariliyor && ilerleme.toplam > 0 && (
+            <Kart>
+              <p className="text-sm">
+                İçe aktarılıyor… {ilerleme.yapilan}/{ilerleme.toplam}
+              </p>
+            </Kart>
+          )}
+
+          <Buton tamGenislik onClick={iceAktar} disabled={aktariliyor}>
+            {aktariliyor ? "İçe aktarılıyor…" : `${urunler.length} Ürünü İçe Aktar`}
           </Buton>
         </>
       )}
-    </div>
-  );
-}
-
-function SutunSecici({
-  etiket,
-  basliklar,
-  deger,
-  onDegisim
-}: {
-  etiket: string;
-  basliklar: string[];
-  deger: number;
-  onDegisim: (v: number) => void;
-}) {
-  return (
-    <div>
-      <label className="block text-xs font-medium mb-1.5 text-gray-600">{etiket}</label>
-      <select
-        value={deger}
-        onChange={(e) => onDegisim(Number(e.target.value))}
-        className="focus-ring w-full rounded-xl border border-line px-3.5 py-2 text-sm bg-surface"
-      >
-        <option value={-1}>— Seçilmedi —</option>
-        {basliklar.map((b, i) => (
-          <option key={i} value={i}>
-            {b || `(sütun ${i + 1})`}
-          </option>
-        ))}
-      </select>
     </div>
   );
 }
