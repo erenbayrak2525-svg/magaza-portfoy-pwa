@@ -2,14 +2,19 @@ import type { Metadata, Viewport } from "next";
 import ServiceWorkerKaydi from "@/components/ServiceWorkerKaydi";
 import "./globals.css";
 
+// "./manifest.webmanifest" gibi NOKTA-göreli yollar, sayfanın kendi URL'ine göre çözülüyor —
+// bu yüzden /panel/ gibi alt sayfalarda .../panel/manifest.webmanifest aranıp 404 alınıyordu.
+// BASE_PATH'i başa ekleyip her zaman site köküne göre sabit, doğru bir yol üretiyoruz.
+const BASE_PATH = process.env.NEXT_PUBLIC_BASE_PATH || "";
+
 export const metadata: Metadata = {
   title: "Wasmoda Mağaza Portföyü ve Personel Yönetimi",
   description: "Saha ekipleri ve mağaza portföyü için operasyonel yönetim uygulaması",
-  manifest: "./manifest.webmanifest",
+  manifest: `${BASE_PATH}/manifest.webmanifest`,
   icons: {
-    icon: ["./favicon.png", "./icons/icon-192.png"],
-    shortcut: "./favicon.png",
-    apple: "./icons/icon-192.png"
+    icon: [`${BASE_PATH}/favicon.png`, `${BASE_PATH}/icons/icon-192.png`],
+    shortcut: `${BASE_PATH}/favicon.png`,
+    apple: `${BASE_PATH}/icons/icon-192.png`
   },
   // iOS Safari, Web App Manifest'teki "display: standalone" ayarını "Ana Ekrana Ekle"
   // ile eklenen simgeler için tek başına yeterli saymaz — bu eski Apple meta etiketleri

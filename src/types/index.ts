@@ -76,7 +76,7 @@ export interface StokUrunu {
 }
 
 export function stokToplamAdet(urun: StokUrunu): number {
-  return urun.varyantlar.reduce((toplam, v) => toplam + v.adet, 0);
+  return (urun.varyantlar ?? []).reduce((toplam, v) => toplam + (v.adet ?? 0), 0);
 }
 
 export interface Bildirim {

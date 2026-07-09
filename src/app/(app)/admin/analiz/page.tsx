@@ -30,7 +30,7 @@ function AnalizIcerik() {
   const gorevler = firebaseYapilandirildi ? gorevSonuc.veri : MOCK_GOREVLER;
   const stokUrunleri = firebaseYapilandirildi ? stokSonuc.veri : MOCK_STOK_URUNLERI;
 
-  const toplamCiro = ciroKayitlari.reduce((t, c) => t + c.tutar, 0);
+  const toplamCiro = ciroKayitlari.reduce((t, c) => t + (c.tutar ?? 0), 0);
   const toplamGorev = gorevler.length;
   const tamamlanan = gorevler.filter((g) => g.durum === "tamamlandi").length;
   const tamamlanmaOrani = toplamGorev ? Math.round((tamamlanan / toplamGorev) * 100) : 0;

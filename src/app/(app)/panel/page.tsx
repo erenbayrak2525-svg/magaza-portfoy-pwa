@@ -29,7 +29,7 @@ export default function PanelSayfasi() {
   const benimGorevlerim = gorevler.filter((g) => g.atananKullaniciId === kullanici.id);
   const bekleyenSayisi = gorevler.filter((g) => g.durum === "bekliyor" || g.durum === "devam_ediyor").length;
   const okunmamisBildirim = MOCK_BILDIRIMLER.filter((b) => !b.okundu).length;
-  const toplamCiro = ciroKayitlari.reduce((t, c) => t + c.tutar, 0);
+  const toplamCiro = ciroKayitlari.reduce((t, c) => t + (c.tutar ?? 0), 0);
   const toplamStokAdet = stokUrunleri.reduce((t, u) => t + stokToplamAdet(u), 0);
 
   return (
