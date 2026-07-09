@@ -109,8 +109,8 @@ function StokDetayIcerik() {
   return (
     <div className="space-y-4">
       <Kart>
-        <p className="font-semibold text-sm">{urun.urunAdi}</p>
-        <p className="text-xs text-gray-500 font-mono mt-0.5">{urun.urunKodu}</p>
+        <p className="font-semibold text-sm">{urun.urunAdi || "(isimsiz ürün)"}</p>
+        <p className="text-xs text-gray-500 font-mono mt-0.5">{urun.urunKodu || "—"}</p>
         <p className="text-sm font-semibold mt-2">{stokToplamAdet(urun)} adet stokta</p>
       </Kart>
 
@@ -148,7 +148,7 @@ function StokDetayIcerik() {
         <p className="text-sm font-medium mb-3">Ürün Görseli</p>
         {gorselOnizleme ? (
           // eslint-disable-next-line @next/next/no-img-element
-          <img src={gorselOnizleme} alt={urun.urunAdi} className="w-full rounded-xl mb-3 object-cover max-h-64" />
+          <img src={gorselOnizleme} alt={urun.urunAdi ?? ""} className="w-full rounded-xl mb-3 object-cover max-h-64" />
         ) : (
           <div className="w-full h-32 rounded-xl bg-canvas border border-dashed border-line flex items-center justify-center text-sm text-gray-400 mb-3">
             Henüz görsel yok

@@ -93,7 +93,7 @@ function AnalizIcerik() {
                 return (
                   <div key={u.id}>
                     <div className="flex justify-between text-xs mb-1">
-                      <span className="text-gray-600 truncate pr-2">{u.urunAdi}</span>
+                      <span className="text-gray-600 truncate pr-2">{u.urunAdi || "(isimsiz ürün)"}</span>
                       <span className="font-medium shrink-0">{adet}</span>
                     </div>
                     <div className="h-2 rounded-full bg-canvas overflow-hidden">

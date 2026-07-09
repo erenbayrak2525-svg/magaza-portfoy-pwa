@@ -18,7 +18,7 @@ export default function StokKatalogSayfasi() {
     const q = arama.trim().toLowerCase();
     if (!q) return tumUrunler;
     return tumUrunler.filter(
-      (u) => u.urunAdi.toLowerCase().includes(q) || u.urunKodu.toLowerCase().includes(q)
+      (u) => (u.urunAdi ?? "").toLowerCase().includes(q) || (u.urunKodu ?? "").toLowerCase().includes(q)
     );
   }, [tumUrunler, arama]);
 
@@ -85,16 +85,16 @@ function StokListesi({ urunler }: { urunler: StokUrunu[] }) {
               <div className="flex items-center gap-3">
                 {urun.gorselUrl ? (
                   // eslint-disable-next-line @next/next/no-img-element
-                  <img src={urun.gorselUrl} alt={urun.urunAdi} className="w-12 h-12 rounded-lg object-cover shrink-0" />
+                  <img src={urun.gorselUrl} alt={urun.urunAdi ?? ""} className="w-12 h-12 rounded-lg object-cover shrink-0" />
                 ) : (
                   <div className="w-12 h-12 rounded-lg bg-canvas border border-dashed border-line flex items-center justify-center text-gray-300 text-lg shrink-0">
                     📦
                   </div>
                 )}
                 <div className="min-w-0 flex-1">
-                  <p className="font-medium text-sm truncate">{urun.urunAdi}</p>
+                  <p className="font-medium text-sm truncate">{urun.urunAdi || "(isimsiz ürün)"}</p>
                   <p className="text-xs text-gray-500 font-mono">
-                    {urun.urunKodu} · {urun.varyantlar?.length ?? 0} varyant
+                    {urun.urunKodu || "—"} · {urun.varyantlar?.length ?? 0} varyant
                   </p>
                   {urun.etiketler?.length > 0 && (
                     <div className="flex flex-wrap gap-1 mt-1">
