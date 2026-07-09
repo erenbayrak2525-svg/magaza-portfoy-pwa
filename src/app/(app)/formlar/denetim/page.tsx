@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { MOCK_MAGAZALAR } from "@/data/mockData";
 import { kuyrugaEkle } from "@/lib/outbox";
 import { kuyruguSenkronEt } from "@/lib/senkron";
 import { useCevrimici } from "@/lib/useCevrimici";
@@ -21,7 +20,6 @@ const KRITERLER = [
 export default function DenetimFormuSayfasi() {
   const cevrimici = useCevrimici();
   const kullanici = useAuthStore((s) => s.kullanici);
-  const [magazaId, setMagazaId] = useState(MOCK_MAGAZALAR[0]?.id ?? "");
   const [puanlar, setPuanlar] = useState<Record<string, number>>({});
   const [genelNot, setGenelNot] = useState("");
   const [gonderiliyor, setGonderiliyor] = useState(false);
@@ -40,7 +38,6 @@ export default function DenetimFormuSayfasi() {
       await kuyrugaEkle({
         tip: "denetim_formu",
         payload: {
-          magazaId,
           tarih: new Date().toISOString().slice(0, 10),
           denetciAdi: kullanici?.adSoyad ?? "Bilinmiyor",
           puanlar,
@@ -62,19 +59,6 @@ export default function DenetimFormuSayfasi() {
 
   return (
     <div className="space-y-4">
-      <Kart>
-        <label className="block text-sm font-medium mb-1.5">Mağaza</label>
-        <select
-          value={magazaId}
-          onChange={(e) => setMagazaId(e.target.value)}
-          className="focus-ring w-full rounded-xl border border-line px-3.5 py-2.5 text-sm bg-surface"
-        >
-          {MOCK_MAGAZALAR.map((m) => (
-            <option key={m.id} value={m.id}>{m.ad}</option>
-          ))}
-        </select>
-      </Kart>
-
       <div className="space-y-2">
         {KRITERLER.map((kriter) => (
           <Kart key={kriter}>

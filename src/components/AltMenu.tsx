@@ -19,14 +19,14 @@ const MENU: Record<Rol, MenuOgesi[]> = {
   ],
   bolge_muduru: [
     { href: "/panel", etiket: "Panel", ikon: "🏠" },
-    { href: "/magazalar", etiket: "Mağazalar", ikon: "🏬" },
+    { href: "/stok", etiket: "Stok", ikon: "🏷️" },
     { href: "/gorevler", etiket: "Görevler", ikon: "✅" },
     { href: "/formlar", etiket: "Formlar", ikon: "📝" },
     { href: "/profil", etiket: "Profil", ikon: "👤" }
   ],
   admin: [
     { href: "/panel", etiket: "Panel", ikon: "🏠" },
-    { href: "/magazalar", etiket: "Mağazalar", ikon: "🏬" },
+    { href: "/stok", etiket: "Stok", ikon: "🏷️" },
     { href: "/admin/gorev-atama", etiket: "Görev Ata", ikon: "📤" },
     { href: "/admin/analiz", etiket: "Analiz", ikon: "📊" },
     { href: "/profil", etiket: "Profil", ikon: "👤" }

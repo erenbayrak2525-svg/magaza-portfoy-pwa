@@ -2,7 +2,10 @@
 
 import Link from "next/link";
 import { useAuthStore } from "@/store/authStore";
-import { MOCK_GOREVLER, MOCK_MAGAZALAR, MOCK_CIRO_KAYITLARI, MOCK_BILDIRIMLER } from "@/data/mockData";
+import { useFirestoreListesi } from "@/lib/firestoreOkuma";
+import { firebaseYapilandirildi } from "@/lib/firebaseClient";
+import { MOCK_GOREVLER, MOCK_CIRO_KAYITLARI, MOCK_BILDIRIMLER, MOCK_STOK_URUNLERI } from "@/data/mockData";
+import { stokToplamAdet, type Gorev, type CiroKaydi, type StokUrunu } from "@/types";
 import Kart from "@/components/ui/Kart";
 import DurumRozeti, { stripRengi } from "@/components/ui/DurumRozeti";
 
@@ -12,11 +15,22 @@ function paraFormatla(n: number) {
 
 export default function PanelSayfasi() {
   const kullanici = useAuthStore((s) => s.kullanici);
+
+  const gorevSonuc = useFirestoreListesi<Gorev>("gorevler");
+  const stokSonuc = useFirestoreListesi<StokUrunu>("stok_urunleri");
+  const ciroSonuc = useFirestoreListesi<CiroKaydi>("ciro_kayitlari");
+
+  const gorevler = firebaseYapilandirildi ? gorevSonuc.veri : MOCK_GOREVLER;
+  const stokUrunleri = firebaseYapilandirildi ? stokSonuc.veri : MOCK_STOK_URUNLERI;
+  const ciroKayitlari = firebaseYapilandirildi ? ciroSonuc.veri : MOCK_CIRO_KAYITLARI;
+
   if (!kullanici) return null;
 
-  const benimGorevlerim = MOCK_GOREVLER.filter((g) => g.atananKullaniciId === kullanici.id);
-  const bekleyenSayisi = MOCK_GOREVLER.filter((g) => g.durum === "bekliyor" || g.durum === "devam_ediyor").length;
+  const benimGorevlerim = gorevler.filter((g) => g.atananKullaniciId === kullanici.id);
+  const bekleyenSayisi = gorevler.filter((g) => g.durum === "bekliyor" || g.durum === "devam_ediyor").length;
   const okunmamisBildirim = MOCK_BILDIRIMLER.filter((b) => !b.okundu).length;
+  const toplamCiro = ciroKayitlari.reduce((t, c) => t + c.tutar, 0);
+  const toplamStokAdet = stokUrunleri.reduce((t, u) => t + stokToplamAdet(u), 0);
 
   return (
     <div className="space-y-6">
@@ -45,27 +59,31 @@ export default function PanelSayfasi() {
               <p className="text-2xl font-semibold">
                 {benimGorevlerim.filter((g) => g.durum === "tamamlandi").length}
               </p>
-              <p className="text-xs text-gray-500 mt-0.5">Tamamlanan (bu hafta)</p>
+              <p className="text-xs text-gray-500 mt-0.5">Tamamlanan</p>
             </Kart>
           </div>
 
           <section>
             <h3 className="text-sm font-semibold mb-2">Güncel görevlerin</h3>
-            <div className="space-y-2">
-              {benimGorevlerim.map((g) => (
-                <Link key={g.id} href={`/gorevler/detay?id=${g.id}`}>
-                  <Kart stripRengi={stripRengi(g.durum)}>
-                    <div className="flex items-start justify-between gap-2">
-                      <div>
-                        <p className="font-medium text-sm">{g.baslik}</p>
-                        <p className="text-xs text-gray-500 mt-0.5">{g.magazaAdi} · Son: {g.sonTarih}</p>
+            {benimGorevlerim.length === 0 ? (
+              <p className="text-sm text-gray-500">Şu an sana atanmış görev yok.</p>
+            ) : (
+              <div className="space-y-2">
+                {benimGorevlerim.map((g) => (
+                  <Link key={g.id} href={`/gorevler/detay?id=${g.id}`}>
+                    <Kart stripRengi={stripRengi(g.durum)}>
+                      <div className="flex items-start justify-between gap-2">
+                        <div>
+                          <p className="font-medium text-sm">{g.baslik}</p>
+                          <p className="text-xs text-gray-500 mt-0.5">Son: {g.sonTarih}</p>
+                        </div>
+                        <DurumRozeti durum={g.durum} />
                       </div>
-                      <DurumRozeti durum={g.durum} />
-                    </div>
-                  </Kart>
-                </Link>
-              ))}
-            </div>
+                    </Kart>
+                  </Link>
+                ))}
+              </div>
+            )}
           </section>
         </>
       )}
@@ -74,32 +92,20 @@ export default function PanelSayfasi() {
         <>
           <div className="grid grid-cols-2 gap-3">
             <Kart>
-              <p className="text-2xl font-semibold">{MOCK_MAGAZALAR.length}</p>
-              <p className="text-xs text-gray-500 mt-0.5">Sorumlu olduğun mağaza</p>
-            </Kart>
-            <Kart>
               <p className="text-2xl font-semibold">{bekleyenSayisi}</p>
               <p className="text-xs text-gray-500 mt-0.5">Açık görev</p>
+            </Kart>
+            <Kart>
+              <p className="text-2xl font-semibold">{toplamStokAdet}</p>
+              <p className="text-xs text-gray-500 mt-0.5">Stokta toplam adet</p>
             </Kart>
           </div>
 
           <section>
-            <h3 className="text-sm font-semibold mb-2">Mağazalarının bugünkü cirosu</h3>
-            <div className="space-y-2">
-              {MOCK_MAGAZALAR.map((m) => {
-                const ciro = MOCK_CIRO_KAYITLARI.find((c) => c.magazaId === m.id);
-                return (
-                  <Link key={m.id} href={`/magazalar/detay?id=${m.id}`}>
-                    <Kart>
-                      <div className="flex items-center justify-between">
-                        <p className="font-medium text-sm">{m.ad}</p>
-                        <p className="text-sm font-semibold">{ciro ? paraFormatla(ciro.tutar) : "—"}</p>
-                      </div>
-                    </Kart>
-                  </Link>
-                );
-              })}
-            </div>
+            <h3 className="text-sm font-semibold mb-2">Bugünkü ciro</h3>
+            <Kart>
+              <p className="text-2xl font-semibold">{paraFormatla(toplamCiro)}</p>
+            </Kart>
           </section>
         </>
       )}
@@ -108,12 +114,12 @@ export default function PanelSayfasi() {
         <>
           <div className="grid grid-cols-2 gap-3">
             <Kart>
-              <p className="text-2xl font-semibold">{MOCK_MAGAZALAR.length}</p>
-              <p className="text-xs text-gray-500 mt-0.5">Toplam mağaza</p>
+              <p className="text-2xl font-semibold">{bekleyenSayisi}</p>
+              <p className="text-xs text-gray-500 mt-0.5">Açık görev</p>
             </Kart>
             <Kart>
-              <p className="text-2xl font-semibold">{bekleyenSayisi}</p>
-              <p className="text-xs text-gray-500 mt-0.5">Portföy genelinde açık görev</p>
+              <p className="text-2xl font-semibold">{stokUrunleri.length}</p>
+              <p className="text-xs text-gray-500 mt-0.5">Kataloğdaki ürün</p>
             </Kart>
           </div>
 
@@ -128,12 +134,6 @@ export default function PanelSayfasi() {
               <Kart className="text-center">
                 <p className="text-2xl mb-1">📊</p>
                 <p className="text-sm font-medium">Analiz</p>
-              </Kart>
-            </Link>
-            <Link href="/admin/portfoy">
-              <Kart className="text-center">
-                <p className="text-2xl mb-1">🏬</p>
-                <p className="text-sm font-medium">Portföy Yönetimi</p>
               </Kart>
             </Link>
             <Link href="/gorevler">
@@ -159,10 +159,7 @@ export default function PanelSayfasi() {
           <section>
             <h3 className="text-sm font-semibold mb-2">Bugünkü toplam ciro</h3>
             <Kart>
-              <p className="text-2xl font-semibold">
-                {paraFormatla(MOCK_CIRO_KAYITLARI.reduce((t, c) => t + c.tutar, 0))}
-              </p>
-              <p className="text-xs text-gray-500 mt-0.5">{MOCK_MAGAZALAR.length} mağaza toplamı</p>
+              <p className="text-2xl font-semibold">{paraFormatla(toplamCiro)}</p>
             </Kart>
           </section>
         </>

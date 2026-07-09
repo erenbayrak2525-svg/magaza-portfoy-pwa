@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { MOCK_MAGAZALAR } from "@/data/mockData";
 import { kuyrugaEkle } from "@/lib/outbox";
 import { kuyruguSenkronEt } from "@/lib/senkron";
 import { useCevrimici } from "@/lib/useCevrimici";
@@ -10,7 +9,6 @@ import Buton from "@/components/ui/Buton";
 
 export default function CiroGirisiSayfasi() {
   const cevrimici = useCevrimici();
-  const [magazaId, setMagazaId] = useState(MOCK_MAGAZALAR[0]?.id ?? "");
   const [tarih, setTarih] = useState(new Date().toISOString().slice(0, 10));
   const [tutar, setTutar] = useState("");
   const [fisAdedi, setFisAdedi] = useState("");
@@ -27,7 +25,7 @@ export default function CiroGirisiSayfasi() {
       // aşağıdaki outbox yaklaşımı zaten hem online hem offline'da aynı akışı garanti eder.
       await kuyrugaEkle({
         tip: "ciro_girisi",
-        payload: { magazaId, tarih, tutar: Number(tutar), fisAdedi: Number(fisAdedi) || null, notlar }
+        payload: { tarih, tutar: Number(tutar), fisAdedi: Number(fisAdedi) || null, notlar }
       });
       if (cevrimici) {
         const sonuc = await kuyruguSenkronEt();
@@ -47,18 +45,6 @@ export default function CiroGirisiSayfasi() {
     <form onSubmit={gonder} className="space-y-4">
       <Kart>
         <div className="space-y-3">
-          <div>
-            <label className="block text-sm font-medium mb-1.5">Mağaza</label>
-            <select
-              value={magazaId}
-              onChange={(e) => setMagazaId(e.target.value)}
-              className="focus-ring w-full rounded-xl border border-line px-3.5 py-2.5 text-sm bg-surface"
-            >
-              {MOCK_MAGAZALAR.map((m) => (
-                <option key={m.id} value={m.id}>{m.ad}</option>
-              ))}
-            </select>
-          </div>
           <div>
             <label className="block text-sm font-medium mb-1.5">Tarih</label>
             <input

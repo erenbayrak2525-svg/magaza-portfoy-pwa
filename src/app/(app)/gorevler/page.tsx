@@ -3,10 +3,12 @@
 import { useMemo, useState } from "react";
 import Link from "next/link";
 import { useAuthStore } from "@/store/authStore";
+import { useFirestoreListesi } from "@/lib/firestoreOkuma";
+import { firebaseYapilandirildi } from "@/lib/firebaseClient";
 import { MOCK_GOREVLER } from "@/data/mockData";
 import Kart from "@/components/ui/Kart";
 import DurumRozeti, { stripRengi } from "@/components/ui/DurumRozeti";
-import type { GorevDurumu } from "@/types";
+import type { GorevDurumu, Gorev } from "@/types";
 
 const FILTRELER: { anahtar: "hepsi" | GorevDurumu; etiket: string }[] = [
   { anahtar: "hepsi", etiket: "Hepsi" },
@@ -18,15 +20,18 @@ const FILTRELER: { anahtar: "hepsi" | GorevDurumu; etiket: string }[] = [
 export default function GorevlerSayfasi() {
   const kullanici = useAuthStore((s) => s.kullanici);
   const [filtre, setFiltre] = useState<(typeof FILTRELER)[number]["anahtar"]>("hepsi");
+  const { veri: canliGorevler, yukleniyor } = useFirestoreListesi<Gorev>("gorevler");
+
+  const tumGorevler = firebaseYapilandirildi ? canliGorevler : MOCK_GOREVLER;
 
   const gorevler = useMemo(() => {
-    let liste = MOCK_GOREVLER;
+    let liste = tumGorevler;
     if (kullanici?.rol === "personel") {
       liste = liste.filter((g) => g.atananKullaniciId === kullanici.id);
     }
     if (filtre !== "hepsi") liste = liste.filter((g) => g.durum === filtre);
     return liste;
-  }, [kullanici, filtre]);
+  }, [tumGorevler, kullanici, filtre]);
 
   return (
     <div className="space-y-4">
@@ -47,7 +52,8 @@ export default function GorevlerSayfasi() {
       </div>
 
       <div className="space-y-2">
-        {gorevler.length === 0 && (
+        {yukleniyor && <p className="text-sm text-gray-500 text-center py-10">Yükleniyor…</p>}
+        {!yukleniyor && gorevler.length === 0 && (
           <p className="text-sm text-gray-500 text-center py-10">Bu filtreye uyan görev yok.</p>
         )}
         {gorevler.map((g) => (
@@ -56,7 +62,7 @@ export default function GorevlerSayfasi() {
               <div className="flex items-start justify-between gap-2">
                 <div className="min-w-0">
                   <p className="font-medium text-sm truncate">{g.baslik}</p>
-                  <p className="text-xs text-gray-500 mt-0.5">{g.magazaAdi} · Son: {g.sonTarih}</p>
+                  <p className="text-xs text-gray-500 mt-0.5">Son: {g.sonTarih}</p>
                 </div>
                 <DurumRozeti durum={g.durum} />
               </div>

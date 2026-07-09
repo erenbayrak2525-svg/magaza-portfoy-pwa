@@ -53,18 +53,6 @@ export default function ProfilSayfasi() {
         </div>
       </Kart>
 
-      <Link href="/iletisim">
-        <Kart>
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <span className="text-xl">📞</span>
-              <span className="text-sm font-medium">İletişim Dizini</span>
-            </div>
-            <span className="text-gray-300">›</span>
-          </div>
-        </Kart>
-      </Link>
-
       <Link href="/bildirimler">
         <Kart>
           <div className="flex items-center justify-between">

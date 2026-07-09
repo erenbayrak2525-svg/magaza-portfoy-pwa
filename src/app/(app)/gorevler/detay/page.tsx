@@ -2,10 +2,14 @@
 
 import { useState, useRef, Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
+import { useFirestoreBelge } from "@/lib/firestoreOkuma";
+import { firebaseYapilandirildi } from "@/lib/firebaseClient";
 import { MOCK_GOREVLER } from "@/data/mockData";
 import { kuyrugaEkle } from "@/lib/outbox";
 import { kuyruguSenkronEt } from "@/lib/senkron";
 import { useCevrimici } from "@/lib/useCevrimici";
+import { gorselSikistir } from "@/lib/gorselSikistir";
+import type { Gorev } from "@/types";
 import Kart from "@/components/ui/Kart";
 import Buton from "@/components/ui/Buton";
 import DurumRozeti, { stripRengi } from "@/components/ui/DurumRozeti";
@@ -24,13 +28,20 @@ function GorevDetayIcerik() {
   const id = params.get("id");
   const cevrimici = useCevrimici();
 
-  const gorev = MOCK_GOREVLER.find((g) => g.id === id);
+  const { veri: canliGorev, yukleniyor } = useFirestoreBelge<Gorev>("gorevler", id);
+  const gorev = firebaseYapilandirildi ? canliGorev : MOCK_GOREVLER.find((g) => g.id === id) ?? null;
+
   const dosyaInputRef = useRef<HTMLInputElement>(null);
 
   const [fotoOnizleme, setFotoOnizleme] = useState<string | null>(null);
+  const [fotoHatasi, setFotoHatasi] = useState<string | null>(null);
   const [gonderiliyor, setGonderiliyor] = useState(false);
   const [tamamlandi, setTamamlandi] = useState(false);
   const [kuyrugaAlindi, setKuyrugaAlindi] = useState(false);
+
+  if (yukleniyor) {
+    return <p className="text-sm text-gray-500 text-center py-16">Yükleniyor…</p>;
+  }
 
   if (!gorev) {
     return (
@@ -46,19 +57,19 @@ function GorevDetayIcerik() {
   function fotoSecildi(e: React.ChangeEvent<HTMLInputElement>) {
     const dosya = e.target.files?.[0];
     if (!dosya) return;
-    const okuyucu = new FileReader();
-    okuyucu.onload = () => setFotoOnizleme(okuyucu.result as string);
-    okuyucu.readAsDataURL(dosya);
+    setFotoHatasi(null);
+    gorselSikistir(dosya)
+      .then(setFotoOnizleme)
+      .catch(() => setFotoHatasi("Görsel işlenemedi, farklı bir dosya dene."));
   }
 
   async function tamamla() {
     if (!gorev) return;
     setGonderiliyor(true);
     try {
-      // TODO: Firebase Storage'a foto yükleme ve 'gorevler' koleksiyonunda durum güncelleme burada yapılacak.
       await kuyrugaEkle({
         tip: "gorev_tamamla",
-        payload: { id: gorev.id, durum: "tamamlandi", kanitFoto: fotoOnizleme, tamamlanmaZamani: new Date().toISOString() }
+        payload: { id: gorev.id, durum: "tamamlandi", kanitFotoUrl: fotoOnizleme, tamamlanmaZamani: new Date().toISOString() }
       });
 
       if (cevrimici) {
@@ -84,7 +95,6 @@ function GorevDetayIcerik() {
         </div>
         <p className="text-sm text-gray-600 leading-relaxed">{gorev.aciklama}</p>
         <div className="mt-3 pt-3 border-t border-line text-xs text-gray-500 space-y-1">
-          <p>Mağaza: <span className="text-ink font-medium">{gorev.magazaAdi}</span></p>
           <p>Son tarih: <span className="text-ink font-medium">{gorev.sonTarih}</span></p>
           <p>Öncelik: <span className="text-ink font-medium capitalize">{gorev.oncelik}</span></p>
         </div>
@@ -101,6 +111,7 @@ function GorevDetayIcerik() {
               Henüz fotoğraf yok
             </div>
           )}
+          {fotoHatasi && <p className="text-xs text-signal-late mb-3">{fotoHatasi}</p>}
           <input
             ref={dosyaInputRef}
             type="file"

@@ -1,58 +1,12 @@
-import type { Bildirim, CiroKaydi, Gorev, IletisimKisi, Kullanici, Magaza, StokUrunu } from "@/types";
+import type { Bildirim, CiroKaydi, Gorev, IletisimKisi, Kullanici, StokUrunu } from "@/types";
 
-// NOT: Aşağıdaki mağaza isimleri ve adresleri yer tutucudur (Wasmoda e-ticaret
-// platformu olduğu için gerçek şube bilgisi bilinmiyor). Gerçek fiziksel
-// showroom/depo/mağazaların varsa bu dosyadaki "ad", "adres", "kod" alanlarını
-// gerçek bilgilerle değiştir.
+// NOT: Bu dosyadaki veriler sadece Firebase henüz bağlanmadığında (demo modu) veya
+// Firestore'da o koleksiyon boşken gösterilir. Firebase bağlandıktan sonra gerçek
+// veriler görünür, bu mock veriler otomatik devre dışı kalır.
 export const MOCK_KULLANICILAR: Kullanici[] = [
-  { id: "u1", adSoyad: "Elif Kaya", eposta: "elif@wasmoda.com.tr", rol: "personel", magazaId: "m1" },
-  { id: "u2", adSoyad: "Deniz Aydın", eposta: "deniz@wasmoda.com.tr", rol: "bolge_muduru", bolgeId: "b1" },
+  { id: "u1", adSoyad: "Elif Kaya", eposta: "elif@wasmoda.com.tr", rol: "personel" },
+  { id: "u2", adSoyad: "Deniz Aydın", eposta: "deniz@wasmoda.com.tr", rol: "bolge_muduru" },
   { id: "u3", adSoyad: "Murat Yönetici", eposta: "admin@wasmoda.com.tr", rol: "admin" }
-];
-
-export const MOCK_MAGAZALAR: Magaza[] = [
-  {
-    id: "m1",
-    ad: "Wasmoda Alsancak Showroom",
-    kod: "WSM-001",
-    adres: "Kıbrıs Şehitleri Cd. No:24, Alsancak, İzmir",
-    bolge: "Ege",
-    metrekare: 180,
-    kiraBaslangic: "2023-01-01",
-    kiraBitis: "2027-01-01",
-    kiraTutari: 145000,
-    sorumluId: "u2",
-    belgeler: [
-      { id: "d1", ad: "Kira Sözleşmesi 2023-2027", tip: "kira_sozlesmesi", dosyaUrl: "#", yuklemeTarihi: "2023-01-05" },
-      { id: "d2", ad: "Demirbaş Listesi", tip: "demirbas_listesi", dosyaUrl: "#", yuklemeTarihi: "2024-03-10" }
-    ]
-  },
-  {
-    id: "m2",
-    ad: "Wasmoda Bostanlı Showroom",
-    kod: "WSM-002",
-    adres: "Cemal Gürsel Cd. No:112, Bostanlı, İzmir",
-    bolge: "Ege",
-    metrekare: 140,
-    kiraBaslangic: "2022-06-01",
-    kiraBitis: "2026-06-01",
-    kiraTutari: 98000,
-    sorumluId: "u2",
-    belgeler: []
-  },
-  {
-    id: "m3",
-    ad: "Wasmoda Karşıyaka Showroom",
-    kod: "WSM-003",
-    adres: "Girne Bulvarı No:8, Karşıyaka, İzmir",
-    bolge: "Ege",
-    metrekare: 210,
-    kiraBaslangic: "2024-02-01",
-    kiraBitis: "2029-02-01",
-    kiraTutari: 168000,
-    sorumluId: "u2",
-    belgeler: []
-  }
 ];
 
 export const MOCK_GOREVLER: Gorev[] = [
@@ -60,8 +14,6 @@ export const MOCK_GOREVLER: Gorev[] = [
     id: "g1",
     baslik: "Vitrin Değişimi",
     aciklama: "Yeni sezon ürünleriyle ön vitrin düzenlemesi yapılacak. Referans görsel merkez ekibinden gelecek.",
-    magazaId: "m1",
-    magazaAdi: "Wasmoda Alsancak Showroom",
     atananKullaniciId: "u1",
     durum: "bekliyor",
     sonTarih: "2026-07-07",
@@ -72,8 +24,6 @@ export const MOCK_GOREVLER: Gorev[] = [
     id: "g2",
     baslik: "Haftalık Stok Sayımı",
     aciklama: "Ayakkabı reyonu için haftalık sayım formu doldurulacak.",
-    magazaId: "m1",
-    magazaAdi: "Wasmoda Alsancak Showroom",
     atananKullaniciId: "u1",
     durum: "devam_ediyor",
     sonTarih: "2026-07-06",
@@ -84,8 +34,6 @@ export const MOCK_GOREVLER: Gorev[] = [
     id: "g3",
     baslik: "Yangın Tüpü Kontrolü",
     aciklama: "Periyodik güvenlik denetimi kapsamında yangın tüplerinin tarihleri kontrol edilecek.",
-    magazaId: "m2",
-    magazaAdi: "Wasmoda Bostanlı Showroom",
     atananKullaniciId: "u1",
     durum: "tamamlandi",
     sonTarih: "2026-07-01",
@@ -96,9 +44,7 @@ export const MOCK_GOREVLER: Gorev[] = [
 ];
 
 export const MOCK_CIRO_KAYITLARI: CiroKaydi[] = [
-  { id: "c1", magazaId: "m1", tarih: "2026-07-04", tutar: 42500, fisAdedi: 61 },
-  { id: "c2", magazaId: "m2", tarih: "2026-07-04", tutar: 31200, fisAdedi: 44 },
-  { id: "c3", magazaId: "m3", tarih: "2026-07-04", tutar: 55800, fisAdedi: 72 }
+  { id: "c1", tarih: "2026-07-04", tutar: 42500, fisAdedi: 61 }
 ];
 
 export const MOCK_ILETISIM: IletisimKisi[] = [
@@ -108,8 +54,8 @@ export const MOCK_ILETISIM: IletisimKisi[] = [
 ];
 
 export const MOCK_BILDIRIMLER: Bildirim[] = [
-  { id: "b1", baslik: "Yeni Görev: Vitrin Değişimi", mesaj: "Alsancak mağazası için yeni görev atandı.", tarih: "2026-07-05T09:10:00", okundu: false, link: "/gorevler/detay?id=g1" },
-  { id: "b2", baslik: "Duyuru", mesaj: "Bu hafta sonu stok sayımı tüm mağazalarda yapılacaktır.", tarih: "2026-07-04T17:30:00", okundu: true }
+  { id: "b1", baslik: "Yeni Görev: Vitrin Değişimi", mesaj: "Yeni görev atandı.", tarih: "2026-07-05T09:10:00", okundu: false, link: "/gorevler/detay?id=g1" },
+  { id: "b2", baslik: "Duyuru", mesaj: "Bu hafta sonu stok sayımı yapılacaktır.", tarih: "2026-07-04T17:30:00", okundu: true }
 ];
 
 export const MOCK_STOK_URUNLERI: StokUrunu[] = [

@@ -1,12 +1,15 @@
 "use client";
 
-import { useState, useRef, Suspense } from "react";
+import { useState, useRef, useEffect, Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
+import { useFirestoreBelge } from "@/lib/firestoreOkuma";
+import { firebaseYapilandirildi } from "@/lib/firebaseClient";
 import { MOCK_STOK_URUNLERI } from "@/data/mockData";
-import { stokToplamAdet } from "@/types";
+import { stokToplamAdet, type StokUrunu } from "@/types";
 import { kuyrugaEkle } from "@/lib/outbox";
 import { kuyruguSenkronEt } from "@/lib/senkron";
 import { useCevrimici } from "@/lib/useCevrimici";
+import { gorselSikistir } from "@/lib/gorselSikistir";
 import Kart from "@/components/ui/Kart";
 import Buton from "@/components/ui/Buton";
 
@@ -22,14 +25,33 @@ function StokDetayIcerik() {
   const params = useSearchParams();
   const router = useRouter();
   const cevrimici = useCevrimici();
-  const urun = MOCK_STOK_URUNLERI.find((u) => u.id === params.get("id"));
+  const id = params.get("id");
+
+  const { veri: canliUrun, yukleniyor } = useFirestoreBelge<StokUrunu>("stok_urunleri", id);
+  const urun = firebaseYapilandirildi ? canliUrun : MOCK_STOK_URUNLERI.find((u) => u.id === id) ?? null;
+
   const dosyaInputRef = useRef<HTMLInputElement>(null);
 
-  const [gorselOnizleme, setGorselOnizleme] = useState<string | null>(urun?.gorselUrl ?? null);
-  const [etiketler, setEtiketler] = useState<string[]>(urun?.etiketler ?? []);
+  const [gorselOnizleme, setGorselOnizleme] = useState<string | null>(null);
+  const [etiketler, setEtiketler] = useState<string[]>([]);
+  const [ilkYuklemeYapildi, setIlkYuklemeYapildi] = useState(false);
   const [yeniEtiket, setYeniEtiket] = useState("");
   const [kaydediliyor, setKaydediliyor] = useState(false);
   const [durumMesaji, setDurumMesaji] = useState<string | null>(null);
+
+  // Firestore'dan veri geldiğinde formu bir kez doldur; sonraki canlı güncellemeler
+  // kullanıcının o an düzenlediği alanları ezmesin diye tekrar doldurmuyoruz.
+  useEffect(() => {
+    if (urun && !ilkYuklemeYapildi) {
+      setGorselOnizleme(urun.gorselUrl ?? null);
+      setEtiketler(urun.etiketler ?? []);
+      setIlkYuklemeYapildi(true);
+    }
+  }, [urun, ilkYuklemeYapildi]);
+
+  if (yukleniyor) {
+    return <p className="text-sm text-gray-500 text-center py-16">Yükleniyor…</p>;
+  }
 
   if (!urun) {
     return (
@@ -45,9 +67,9 @@ function StokDetayIcerik() {
   function gorselSecildi(e: React.ChangeEvent<HTMLInputElement>) {
     const dosya = e.target.files?.[0];
     if (!dosya) return;
-    const okuyucu = new FileReader();
-    okuyucu.onload = () => setGorselOnizleme(okuyucu.result as string);
-    okuyucu.readAsDataURL(dosya);
+    gorselSikistir(dosya)
+      .then(setGorselOnizleme)
+      .catch(() => setDurumMesaji("Görsel işlenemedi, farklı bir dosya dene."));
   }
 
   function etiketEkle() {
@@ -66,9 +88,9 @@ function StokDetayIcerik() {
     setKaydediliyor(true);
     setDurumMesaji(null);
     try {
-      // TODO: gorselOnizleme şu an base64 olarak saklanıyor; Firebase Storage bağlanınca
-      // burada önce Storage'a yükleyip dönen URL'i payload'a koymalısın (Firestore belge
-      // boyutu ~1MB ile sınırlı, çok sayıda/yüksek çözünürlüklü görselde bu sınıra takılır).
+      // TODO: gorselOnizleme şu an base64 (sıkıştırılmış) olarak saklanıyor; Firebase
+      // Storage bağlanınca burada önce Storage'a yükleyip dönen URL'i payload'a koymak
+      // daha doğru olur (Firestore belge boyutu ~1MB ile sınırlı).
       await kuyrugaEkle({
         tip: "stok_urun_guncelle",
         payload: { id: urun.id, gorselUrl: gorselOnizleme, etiketler }
@@ -94,24 +116,28 @@ function StokDetayIcerik() {
 
       <Kart className="overflow-x-auto">
         <p className="text-sm font-medium mb-3">Renk / Beden Dağılımı</p>
-        <table className="w-full text-xs">
-          <thead>
-            <tr className="border-b border-line text-left text-gray-500">
-              <th className="pb-2 pr-3">Renk</th>
-              <th className="pb-2 pr-3">Beden</th>
-              <th className="pb-2">Adet</th>
-            </tr>
-          </thead>
-          <tbody>
-            {urun.varyantlar.map((v, i) => (
-              <tr key={i} className="border-b border-line last:border-0">
-                <td className="py-1.5 pr-3">{v.renk}</td>
-                <td className="py-1.5 pr-3">{v.beden}</td>
-                <td className="py-1.5 font-medium">{v.adet}</td>
+        {(!urun.varyantlar || urun.varyantlar.length === 0) ? (
+          <p className="text-sm text-gray-400">Veri yok</p>
+        ) : (
+          <table className="w-full text-xs">
+            <thead>
+              <tr className="border-b border-line text-left text-gray-500">
+                <th className="pb-2 pr-3">Renk</th>
+                <th className="pb-2 pr-3">Beden</th>
+                <th className="pb-2">Adet</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {urun.varyantlar.map((v, i) => (
+                <tr key={i} className="border-b border-line last:border-0">
+                  <td className="py-1.5 pr-3">{v.renk}</td>
+                  <td className="py-1.5 pr-3">{v.beden}</td>
+                  <td className="py-1.5 font-medium">{v.adet}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )}
         <p className="text-[11px] text-gray-400 mt-3">
           Bu tablo Admin'in Stok İçe Aktar (HTML) ile yüklediği Nebim raporundan gelir; burada
           değiştirilemez.

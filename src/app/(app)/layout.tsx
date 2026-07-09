@@ -9,13 +9,11 @@ import AltMenu from "@/components/AltMenu";
 const BASLIKLAR: Record<string, string> = {
   "/panel": "Panel",
   "/gorevler": "Görevler",
-  "/magazalar": "Mağaza Portalı",
   "/formlar": "Akıllı Formlar",
   "/iletisim": "İletişim Dizini",
   "/profil": "Profil",
   "/bildirimler": "Bildirimler",
   "/admin/gorev-atama": "Görev Atama",
-  "/admin/portfoy": "Portföy Yönetimi",
   "/admin/analiz": "Analiz",
   "/stok": "Stok Kataloğu",
   "/admin/stok-yukle": "Stok İçe Aktar"

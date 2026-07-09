@@ -39,7 +39,6 @@ export default function GirisSayfasi() {
           adSoyad: (profil?.adSoyad as string) || sonuc.user.email?.split("@")[0] || "Kullanıcı",
           eposta: sonuc.user.email || eposta,
           rol: (profil?.rol as Rol) || "personel",
-          magazaId: profil?.magazaId as string | undefined,
           bolgeId: profil?.bolgeId as string | undefined
         });
       } else {

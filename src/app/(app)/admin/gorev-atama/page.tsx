@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { MOCK_MAGAZALAR, MOCK_KULLANICILAR } from "@/data/mockData";
+import { MOCK_KULLANICILAR } from "@/data/mockData";
 import { kuyrugaEkle } from "@/lib/outbox";
 import { kuyruguSenkronEt } from "@/lib/senkron";
 import { useCevrimici } from "@/lib/useCevrimici";
@@ -21,7 +21,6 @@ export default function GorevAtamaSayfasi() {
 
 function GorevAtamaIcerik() {
   const cevrimici = useCevrimici();
-  const [magazaId, setMagazaId] = useState(MOCK_MAGAZALAR[0]?.id ?? "");
   const [personelId, setPersonelId] = useState(PERSONEL_LISTESI[0]?.id ?? "");
   const [baslik, setBaslik] = useState("");
   const [aciklama, setAciklama] = useState("");
@@ -38,7 +37,6 @@ function GorevAtamaIcerik() {
       await kuyrugaEkle({
         tip: "gorev_ata",
         payload: {
-          magazaId,
           atananKullaniciId: personelId,
           baslik,
           aciklama,
@@ -68,18 +66,6 @@ function GorevAtamaIcerik() {
     <form onSubmit={gonder} className="space-y-4">
       <Kart>
         <div className="space-y-3">
-          <div>
-            <label className="block text-sm font-medium mb-1.5">Mağaza</label>
-            <select
-              value={magazaId}
-              onChange={(e) => setMagazaId(e.target.value)}
-              className="focus-ring w-full rounded-xl border border-line px-3.5 py-2.5 text-sm bg-surface"
-            >
-              {MOCK_MAGAZALAR.map((m) => (
-                <option key={m.id} value={m.id}>{m.ad}</option>
-              ))}
-            </select>
-          </div>
           <div>
             <label className="block text-sm font-medium mb-1.5">Personel</label>
             <select

@@ -5,7 +5,6 @@ export interface Kullanici {
   adSoyad: string;
   eposta: string;
   rol: Rol;
-  magazaId?: string;      // personel/bölge müdürü hangi mağaza(lar)a bağlı
   bolgeId?: string;
 }
 
@@ -15,8 +14,6 @@ export interface Gorev {
   id: string;
   baslik: string;
   aciklama: string;
-  magazaId: string;
-  magazaAdi: string;
   atananKullaniciId: string;
   durum: GorevDurumu;
   sonTarih: string;       // ISO date
@@ -27,31 +24,8 @@ export interface Gorev {
   senkronDurumu?: "senkron" | "beklemede";
 }
 
-export interface Magaza {
-  id: string;
-  ad: string;
-  kod: string;            // Nebim/ERP mağaza kodu
-  adres: string;
-  bolge: string;
-  metrekare?: number;
-  kiraBaslangic?: string;
-  kiraBitis?: string;
-  kiraTutari?: number;
-  sorumluId?: string;     // bölge müdürü / mağaza sorumlusu
-  belgeler: MagazaBelge[];
-}
-
-export interface MagazaBelge {
-  id: string;
-  ad: string;
-  tip: "kira_sozlesmesi" | "demirbas_listesi" | "teknik_belge" | "diger";
-  dosyaUrl: string;
-  yuklemeTarihi: string;
-}
-
 export interface CiroKaydi {
   id: string;
-  magazaId: string;
   tarih: string;
   tutar: number;
   fisAdedi?: number;
@@ -61,7 +35,6 @@ export interface CiroKaydi {
 
 export interface StokSayimKaydi {
   id: string;
-  magazaId: string;
   tarih: string;
   urunKodu: string;
   sayilanAdet: number;
@@ -71,7 +44,6 @@ export interface StokSayimKaydi {
 
 export interface DenetimFormu {
   id: string;
-  magazaId: string;
   tarih: string;
   denetciAdi: string;
   puanlar: Record<string, number>; // kriter adı -> puan (1-5)
@@ -85,7 +57,6 @@ export interface IletisimKisi {
   rol: string;
   telefon: string;
   whatsapp?: string;
-  magazaId?: string;
 }
 
 export interface StokVaryanti {
