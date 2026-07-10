@@ -101,6 +101,21 @@ export default function PanelSayfasi() {
             </Kart>
           </div>
 
+          <div className="grid grid-cols-2 gap-3">
+            <Link href="/admin/analiz">
+              <Kart className="text-center">
+                <p className="text-2xl mb-1">📊</p>
+                <p className="text-sm font-medium">Analiz</p>
+              </Kart>
+            </Link>
+            <Link href="/kasa-defteri">
+              <Kart className="text-center">
+                <p className="text-2xl mb-1">📒</p>
+                <p className="text-sm font-medium">Kasa Defteri</p>
+              </Kart>
+            </Link>
+          </div>
+
           <section>
             <h3 className="text-sm font-semibold mb-2">Bugünkü ciro</h3>
             <Kart>
@@ -152,6 +167,12 @@ export default function PanelSayfasi() {
               <Kart className="text-center">
                 <p className="text-2xl mb-1">📥</p>
                 <p className="text-sm font-medium">Stok İçe Aktar (HTML)</p>
+              </Kart>
+            </Link>
+            <Link href="/kasa-defteri">
+              <Kart className="text-center">
+                <p className="text-2xl mb-1">📒</p>
+                <p className="text-sm font-medium">Kasa Defteri</p>
               </Kart>
             </Link>
           </div>

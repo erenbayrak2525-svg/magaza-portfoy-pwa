@@ -10,7 +10,8 @@ const KOLEKSIYON_ESLEME: Record<OutboxKaydi["tip"], string> = {
   stok_sayimi: "stok_sayim_kayitlari",
   denetim_formu: "denetim_formlari",
   stok_urun_guncelle: "stok_urunleri",
-  stok_urun_ice_aktar: "stok_urunleri"
+  stok_urun_ice_aktar: "stok_urunleri",
+  kasa_kaydi_ekle: "kasa_defteri"
 };
 
 async function kaydiGonder(kayit: OutboxKaydi) {

@@ -79,6 +79,15 @@ export function stokToplamAdet(urun: StokUrunu): number {
   return (urun.varyantlar ?? []).reduce((toplam, v) => toplam + (v.adet ?? 0), 0);
 }
 
+export interface KasaKaydi {
+  id: string;
+  tarih: string;
+  aciklama: string;
+  tutar: number;
+  tur: "gelir" | "gider";
+  olusturanKullaniciId?: string;
+}
+
 export interface Bildirim {
   id: string;
   baslik: string;

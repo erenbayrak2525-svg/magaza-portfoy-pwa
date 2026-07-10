@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { collection, doc, getDoc, getDocs } from "firebase/firestore";
+import { collection, doc, deleteDoc, getDoc, getDocs } from "firebase/firestore";
 import { db, firebaseYapilandirildi } from "@/lib/firebaseClient";
 
 // ÖNEMLİ MALİYET NOTU: Bu dosya bilerek "canlı dinleyici" (onSnapshot) yerine TEK SEFERLİK
@@ -67,4 +67,13 @@ export function useFirestoreBelge<T>(koleksiyonAdi: string, belgeId: string | nu
   }, [yenile]);
 
   return { veri, yukleniyor, hata, yenile };
+}
+
+// Silme işlemleri offline kuyruğa alınmıyor — internet bağlantısı gerektirir, kullanıcıya
+// anında sonuç (başarılı/başarısız) döner. Ürün silme ve kasa kaydı silme gibi geri
+// alınamayan işlemler için bu daha güvenli: sessizce kuyrukta beklemesindense hata varsa
+// kullanıcı hemen görür.
+export async function belgeSil(koleksiyonAdi: string, belgeId: string): Promise<void> {
+  if (!firebaseYapilandirildi) throw new Error("Firebase bağlı değil (demo modu)");
+  await deleteDoc(doc(db, koleksiyonAdi, belgeId));
 }

@@ -73,6 +73,7 @@ eklendiğinde otomatik oluşur. Uygulamanın kullandığı koleksiyon isimleri:
 | `stok_sayim_kayitlari` | Manuel stok sayım kayıtları |
 | `denetim_formlari` | Periyodik denetim formları |
 | `stok_urunleri` | Ürün stok kataloğu (kod, ad, renk/beden varyantları, görsel, etiketler) |
+| `kasa_defteri` | Gelir/gider kayıtları (Müdür + Admin, Analiz → Kasa Defteri) |
 
 `profiles` koleksiyonuna her kullanıcı için elle bir belge ekle (belge ID'si = Authentication'da
 o kullanıcının **uid**'si, Users listesinden kopyalanabilir):
