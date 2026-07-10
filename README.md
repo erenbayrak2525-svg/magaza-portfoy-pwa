@@ -12,9 +12,13 @@ kataloğu ve offline senkron altyapısı hazır durumda.
 - Görev tamamlama akışı: kamera ile fotoğraf çekme, "Tamamla" butonu
 - 3 akıllı form (Ciro Girişi, Stok Sayımı, Periyodik Denetim)
 - Stok Kataloğu: Nebim V3 HTML raporundan toplu içe aktarma (admin), herkesin görsel/etiket
-  ekleyebildiği ürün kataloğu — **Panel, Görevler, Stok Kataloğu ve Analiz sayfaları artık
-  gerçek Firestore verisini canlı okuyor** (`onSnapshot` ile, `src/lib/firestoreOkuma.ts`).
-  Firebase bağlı değilse veya bir koleksiyon boşsa "Veri yok" / demo verisi gösterilir.
+  ekleyebildiği ürün kataloğu — Panel, Görevler, Stok Kataloğu ve Analiz sayfaları Firestore
+  verisini okuyor (`src/lib/firestoreOkuma.ts`). **Maliyet nedeniyle canlı dinleyici
+  (`onSnapshot`) değil, tek seferlik okuma (`getDocs`) kullanılıyor** — sayfaya her girişte
+  ve "↻ Yenile" butonuna basınca tazelenir, sürekli açık bir bağlantı tutmaz. Yüzlerce
+  ürünlük bir katalogda `onSnapshot` hızla Firestore'un ücretsiz günlük kotasını
+  (Spark planında 50.000 okuma/gün) tüketebilirdi. Firebase bağlı değilse veya bir koleksiyon
+  boşsa "Veri yok" / demo verisi gösterilir.
 - Görsel sıkıştırma: kamera/galeri fotoğrafları Firestore'a yazılmadan önce tarayıcıda otomatik
   küçültülüp sıkıştırılıyor (`src/lib/gorselSikistir.ts`) — Firestore'un ~1MB alan sınırına
   takılmamak için.

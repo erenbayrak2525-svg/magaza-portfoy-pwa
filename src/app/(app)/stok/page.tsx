@@ -7,9 +7,10 @@ import { firebaseYapilandirildi } from "@/lib/firebaseClient";
 import { MOCK_STOK_URUNLERI } from "@/data/mockData";
 import { stokToplamAdet, type StokUrunu } from "@/types";
 import Kart from "@/components/ui/Kart";
+import Buton from "@/components/ui/Buton";
 
 export default function StokKatalogSayfasi() {
-  const { veri: canliUrunler, yukleniyor, hata } = useFirestoreListesi<StokUrunu>("stok_urunleri");
+  const { veri: canliUrunler, yukleniyor, hata, yenile } = useFirestoreListesi<StokUrunu>("stok_urunleri");
   const [arama, setArama] = useState("");
 
   const tumUrunler = firebaseYapilandirildi ? canliUrunler : MOCK_STOK_URUNLERI;
@@ -18,7 +19,10 @@ export default function StokKatalogSayfasi() {
     const q = arama.trim().toLowerCase();
     if (!q) return tumUrunler;
     return tumUrunler.filter(
-      (u) => (u.urunAdi ?? "").toLowerCase().includes(q) || (u.urunKodu ?? "").toLowerCase().includes(q)
+      (u) =>
+        (u.urunAdi ?? "").toLowerCase().includes(q) ||
+        (u.urunKodu ?? "").toLowerCase().includes(q) ||
+        (u.etiketler ?? []).some((e) => e.toLowerCase().includes(q))
     );
   }, [tumUrunler, arama]);
 
@@ -42,6 +46,7 @@ export default function StokKatalogSayfasi() {
       <Kart stripRengi="#C4341E">
         <p className="text-sm text-signal-late">Veri okunamadı: {hata}</p>
         <p className="text-xs text-gray-500 mt-1">Firestore güvenlik kurallarını kontrol et.</p>
+        <Buton varyant="ikincil" className="mt-3" onClick={yenile}>Tekrar Dene</Buton>
       </Kart>
     );
   }
@@ -51,18 +56,22 @@ export default function StokKatalogSayfasi() {
       <div className="text-center py-16">
         <p className="text-sm text-gray-500">Henüz ürün yok.</p>
         <p className="text-xs text-gray-400 mt-1">Admin → Stok İçe Aktar (HTML) ile ürün yükleyebilirsin.</p>
+        <button onClick={yenile} className="text-brand-500 text-sm mt-3 underline">Yenile</button>
       </div>
     );
   }
 
   return (
     <div className="space-y-3">
-      <input
-        value={arama}
-        onChange={(e) => setArama(e.target.value)}
-        placeholder="Ürün adı veya kodu ara…"
-        className="focus-ring w-full rounded-xl border border-line px-3.5 py-2.5 text-sm bg-surface"
-      />
+      <div className="flex gap-2">
+        <input
+          value={arama}
+          onChange={(e) => setArama(e.target.value)}
+          placeholder="Ürün adı, kodu veya etiket ara…"
+          className="focus-ring flex-1 rounded-xl border border-line px-3.5 py-2.5 text-sm bg-surface"
+        />
+        <Buton varyant="ikincil" onClick={yenile} aria-label="Listeyi yenile">↻</Buton>
+      </div>
       <p className="text-xs text-gray-500 px-1">
         {urunler.length} ürün · görsel ve etiket eklemek için bir ürüne dokun
       </p>

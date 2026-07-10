@@ -1,15 +1,16 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { MOCK_KULLANICILAR } from "@/data/mockData";
+import { useFirestoreListesi } from "@/lib/firestoreOkuma";
+import { firebaseYapilandirildi } from "@/lib/firebaseClient";
 import { kuyrugaEkle } from "@/lib/outbox";
 import { kuyruguSenkronEt } from "@/lib/senkron";
 import { useCevrimici } from "@/lib/useCevrimici";
+import type { Kullanici } from "@/types";
 import Kart from "@/components/ui/Kart";
 import Buton from "@/components/ui/Buton";
 import AdminKorumasi from "@/components/AdminKorumasi";
-
-const PERSONEL_LISTESI = MOCK_KULLANICILAR.filter((k) => k.rol === "personel");
 
 export default function GorevAtamaSayfasi() {
   return (
@@ -21,13 +22,25 @@ export default function GorevAtamaSayfasi() {
 
 function GorevAtamaIcerik() {
   const cevrimici = useCevrimici();
-  const [personelId, setPersonelId] = useState(PERSONEL_LISTESI[0]?.id ?? "");
+  // "profiles" koleksiyonu Firestore güvenlik kuralları gereği sadece giriş yapmış
+  // kullanıcılarca okunabilir; buradan gerçek kayıtlı personelleri çekiyoruz.
+  const { veri: canliProfiller, yukleniyor: personelYukleniyor, hata: personelHata, yenile: personelYenile } =
+    useFirestoreListesi<Kullanici>("profiles");
+
+  const tumKullanicilar = firebaseYapilandirildi ? canliProfiller : MOCK_KULLANICILAR;
+  const personelListesi = tumKullanicilar.filter((k) => k.rol === "personel");
+
+  const [personelId, setPersonelId] = useState("");
   const [baslik, setBaslik] = useState("");
   const [aciklama, setAciklama] = useState("");
   const [sonTarih, setSonTarih] = useState("");
   const [oncelik, setOncelik] = useState<"dusuk" | "normal" | "yuksek">("normal");
   const [gonderiliyor, setGonderiliyor] = useState(false);
   const [durumMesaji, setDurumMesaji] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!personelId && personelListesi.length > 0) setPersonelId(personelListesi[0].id);
+  }, [personelId, personelListesi]);
 
   async function gonder(e: React.FormEvent) {
     e.preventDefault();
@@ -68,15 +81,30 @@ function GorevAtamaIcerik() {
         <div className="space-y-3">
           <div>
             <label className="block text-sm font-medium mb-1.5">Personel</label>
-            <select
-              value={personelId}
-              onChange={(e) => setPersonelId(e.target.value)}
-              className="focus-ring w-full rounded-xl border border-line px-3.5 py-2.5 text-sm bg-surface"
-            >
-              {PERSONEL_LISTESI.map((p) => (
-                <option key={p.id} value={p.id}>{p.adSoyad}</option>
-              ))}
-            </select>
+            {personelYukleniyor ? (
+              <p className="text-xs text-gray-500">Personel listesi yükleniyor…</p>
+            ) : personelHata ? (
+              <p className="text-xs text-signal-late">
+                Personel listesi okunamadı: {personelHata}{" "}
+                <button type="button" onClick={personelYenile} className="underline">Tekrar dene</button>
+              </p>
+            ) : personelListesi.length === 0 ? (
+              <p className="text-xs text-gray-500">
+                Henüz "personel" rolünde kayıtlı kimse yok. Firebase Console → Authentication'da
+                kullanıcı ekleyip Firestore'da <span className="font-mono">profiles/&#123;uid&#125;</span> belgesine
+                <span className="font-mono"> rol: "personel"</span> yazman gerekiyor.
+              </p>
+            ) : (
+              <select
+                value={personelId}
+                onChange={(e) => setPersonelId(e.target.value)}
+                className="focus-ring w-full rounded-xl border border-line px-3.5 py-2.5 text-sm bg-surface"
+              >
+                {personelListesi.map((p) => (
+                  <option key={p.id} value={p.id}>{p.adSoyad || p.id}</option>
+                ))}
+              </select>
+            )}
           </div>
           <div>
             <label className="block text-sm font-medium mb-1.5">Görev Başlığı</label>
@@ -131,7 +159,7 @@ function GorevAtamaIcerik() {
         </Kart>
       )}
 
-      <Buton type="submit" tamGenislik disabled={gonderiliyor || !baslik || !sonTarih}>
+      <Buton type="submit" tamGenislik disabled={gonderiliyor || !baslik || !sonTarih || !personelId}>
         {gonderiliyor ? "Atanıyor…" : "Görevi Ata"}
       </Buton>
     </form>

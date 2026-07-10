@@ -20,7 +20,7 @@ const FILTRELER: { anahtar: "hepsi" | GorevDurumu; etiket: string }[] = [
 export default function GorevlerSayfasi() {
   const kullanici = useAuthStore((s) => s.kullanici);
   const [filtre, setFiltre] = useState<(typeof FILTRELER)[number]["anahtar"]>("hepsi");
-  const { veri: canliGorevler, yukleniyor } = useFirestoreListesi<Gorev>("gorevler");
+  const { veri: canliGorevler, yukleniyor, yenile } = useFirestoreListesi<Gorev>("gorevler");
 
   const tumGorevler = firebaseYapilandirildi ? canliGorevler : MOCK_GOREVLER;
 
@@ -35,20 +35,25 @@ export default function GorevlerSayfasi() {
 
   return (
     <div className="space-y-4">
-      <div className="flex gap-2 overflow-x-auto pb-1 -mx-4 px-4">
-        {FILTRELER.map((f) => (
-          <button
-            key={f.anahtar}
-            onClick={() => setFiltre(f.anahtar)}
-            className={`focus-ring whitespace-nowrap rounded-full px-3.5 py-1.5 text-xs font-medium border ${
-              filtre === f.anahtar
-                ? "bg-brand-500 text-white border-brand-500"
-                : "bg-surface text-gray-600 border-line"
-            }`}
-          >
-            {f.etiket}
-          </button>
-        ))}
+      <div className="flex items-center gap-2">
+        <div className="flex gap-2 overflow-x-auto pb-1 -mx-4 px-4 flex-1">
+          {FILTRELER.map((f) => (
+            <button
+              key={f.anahtar}
+              onClick={() => setFiltre(f.anahtar)}
+              className={`focus-ring whitespace-nowrap rounded-full px-3.5 py-1.5 text-xs font-medium border ${
+                filtre === f.anahtar
+                  ? "bg-brand-500 text-white border-brand-500"
+                  : "bg-surface text-gray-600 border-line"
+              }`}
+            >
+              {f.etiket}
+            </button>
+          ))}
+        </div>
+        <button onClick={yenile} aria-label="Listeyi yenile" className="focus-ring shrink-0 text-lg text-gray-500 px-1">
+          ↻
+        </button>
       </div>
 
       <div className="space-y-2">
