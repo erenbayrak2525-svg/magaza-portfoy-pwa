@@ -7,6 +7,7 @@ import { signOut } from "firebase/auth";
 import { auth, firebaseYapilandirildi } from "@/lib/firebaseClient";
 import { useAuthStore } from "@/store/authStore";
 import { useFirestoreListesi } from "@/lib/firestoreOkuma";
+import { adSoyadBul } from "@/lib/adSoyadBul";
 import type { Kullanici } from "@/types";
 import Kart from "@/components/ui/Kart";
 import Buton from "@/components/ui/Buton";
@@ -97,7 +98,7 @@ export default function ProfilSayfasi() {
                   <Kart key={uye.id}>
                     <div className="flex items-center justify-between gap-2">
                       <div className="min-w-0">
-                        <p className="text-sm font-medium truncate">{uye.adSoyad || uye.id}</p>
+                        <p className="text-sm font-medium truncate">{adSoyadBul(uye) || uye.id}</p>
                         <p className="text-xs text-gray-500">{ROL_ETIKET[uye.rol] || uye.rol}</p>
                       </div>
                       <span className={`text-xs shrink-0 ${durum.renk}`}>{durum.metin}</span>

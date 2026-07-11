@@ -8,6 +8,7 @@ import { auth, db, firebaseYapilandirildi } from "@/lib/firebaseClient";
 import { useAuthStore } from "@/store/authStore";
 import { MOCK_KULLANICILAR } from "@/data/mockData";
 import Buton from "@/components/ui/Buton";
+import { adSoyadBul } from "@/lib/adSoyadBul";
 import type { Rol } from "@/types";
 
 export default function GirisSayfasi() {
@@ -36,7 +37,7 @@ export default function GirisSayfasi() {
 
         girisYap({
           id: sonuc.user.uid,
-          adSoyad: (profil?.adSoyad as string) || sonuc.user.email?.split("@")[0] || "Kullanıcı",
+          adSoyad: adSoyadBul(profil) || sonuc.user.email?.split("@")[0] || "Kullanıcı",
           eposta: sonuc.user.email || eposta,
           rol: (profil?.rol as Rol) || "personel",
           bolgeId: profil?.bolgeId as string | undefined

@@ -44,9 +44,12 @@ export function nebimStokAyristir(html: string): AyristirilmisStokSatiri[] {
       .replace(/\s+/g, " ")
       .trim();
 
-    const kodEslesme = tamAd.match(/^(\d+)\s*(.*)$/);
-    const kod = kodEslesme ? kodEslesme[1] : (tamAd.split(" ")[0] || "").trim();
-    const ad = kodEslesme ? kodEslesme[2].trim() : tamAd;
+    // Kod, harf+rakam karışık olabilir (ör. "24K31942", "25yblz00682") — sadece baştaki
+    // rakamları almak yanlış sonuç veriyordu. Kural: ilk boşluğa kadar olan her şey kod,
+    // ondan sonrası ürün adı.
+    const ilkBosluk = tamAd.indexOf(" ");
+    const kod = ilkBosluk > -1 ? tamAd.slice(0, ilkBosluk).trim() : tamAd.trim();
+    const ad = ilkBosluk > -1 ? tamAd.slice(ilkBosluk + 1).trim() : "";
 
     const renk = (renkHucresi.textContent || "").trim();
     const beden = (bedenHucresi.textContent || "").trim();

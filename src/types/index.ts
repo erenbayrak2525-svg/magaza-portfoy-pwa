@@ -90,6 +90,38 @@ export interface KasaKaydi {
   olusturanKullaniciId?: string;
 }
 
+export type GunAdi = "pazartesi" | "sali" | "carsamba" | "persembe" | "cuma" | "cumartesi" | "pazar";
+
+export interface GunProgrami {
+  calisiyor: boolean;
+  baslangic: string; // "09:00"
+  bitis: string; // "18:00"
+}
+
+export interface CalismaProgrami {
+  id: string; // = kullanıcının uid'si
+  gunler: Record<GunAdi, GunProgrami>;
+}
+
+export const GUN_SIRASI: GunAdi[] = ["pazartesi", "sali", "carsamba", "persembe", "cuma", "cumartesi", "pazar"];
+export const GUN_ETIKET: Record<GunAdi, string> = {
+  pazartesi: "Pazartesi",
+  sali: "Salı",
+  carsamba: "Çarşamba",
+  persembe: "Perşembe",
+  cuma: "Cuma",
+  cumartesi: "Cumartesi",
+  pazar: "Pazar"
+};
+
+export function varsayilanCalismaProgrami(): CalismaProgrami["gunler"] {
+  const program = {} as CalismaProgrami["gunler"];
+  for (const gun of GUN_SIRASI) {
+    program[gun] = { calisiyor: gun !== "cumartesi" && gun !== "pazar", baslangic: "09:00", bitis: "18:00" };
+  }
+  return program;
+}
+
 export interface Bildirim {
   id: string;
   baslik: string;

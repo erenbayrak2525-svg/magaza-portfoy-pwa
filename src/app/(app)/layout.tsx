@@ -18,7 +18,8 @@ const BASLIKLAR: Record<string, string> = {
   "/admin/analiz": "Analiz",
   "/stok": "Stok Kataloğu",
   "/admin/stok-yukle": "Stok İçe Aktar",
-  "/kasa-defteri": "Kasa Defteri"
+  "/kasa-defteri": "Kasa Defteri",
+  "/formlar/calisma-saatleri": "Çalışma Saatleri"
 };
 
 function baslikBul(yol: string): string {

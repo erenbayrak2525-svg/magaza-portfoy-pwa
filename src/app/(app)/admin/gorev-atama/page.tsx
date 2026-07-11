@@ -8,6 +8,7 @@ import { kuyrugaEkle } from "@/lib/outbox";
 import { kuyruguSenkronEt } from "@/lib/senkron";
 import { useCevrimici } from "@/lib/useCevrimici";
 import type { Kullanici } from "@/types";
+import { adSoyadBul } from "@/lib/adSoyadBul";
 import Kart from "@/components/ui/Kart";
 import Buton from "@/components/ui/Buton";
 import AdminKorumasi from "@/components/AdminKorumasi";
@@ -106,7 +107,7 @@ function GorevAtamaIcerik() {
                   className="focus-ring w-full rounded-xl border border-line px-3.5 py-2.5 text-sm bg-surface"
                 >
                   {personelListesi.map((p) => (
-                    <option key={p.id} value={p.id}>{p.adSoyad || p.id}</option>
+                    <option key={p.id} value={p.id}>{adSoyadBul(p) || p.id}</option>
                   ))}
                 </select>
                 {personelId && (

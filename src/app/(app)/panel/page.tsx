@@ -175,6 +175,12 @@ export default function PanelSayfasi() {
                 <p className="text-sm font-medium">Kasa Defteri</p>
               </Kart>
             </Link>
+            <Link href="/formlar/calisma-saatleri">
+              <Kart className="text-center">
+                <p className="text-2xl mb-1">🗓️</p>
+                <p className="text-sm font-medium">Çalışma Saatleri</p>
+              </Kart>
+            </Link>
           </div>
 
           <section>
