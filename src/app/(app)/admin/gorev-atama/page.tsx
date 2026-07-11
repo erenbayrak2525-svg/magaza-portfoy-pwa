@@ -63,7 +63,11 @@ function GorevAtamaIcerik() {
       // (Firebase Cloud Messaging + Cloud Function, bkz. README "Push Bildirimler" bölümü).
       if (cevrimici) {
         const sonuc = await kuyruguSenkronEt();
-        setDurumMesaji(sonuc.basarili > 0 ? "Görev atandı ve personele iletildi." : "Kaydedildi, senkron bekleniyor.");
+        setDurumMesaji(
+          sonuc.basarili > 0
+            ? `Görev atandı → personel ID: ${personelId}`
+            : "Kaydedildi, senkron bekleniyor."
+        );
       } else {
         setDurumMesaji("Çevrimdışısın: görev kaydedildi, bağlantı gelince atanacak.");
       }
@@ -95,15 +99,22 @@ function GorevAtamaIcerik() {
                 <span className="font-mono"> rol: "personel"</span> yazman gerekiyor.
               </p>
             ) : (
-              <select
-                value={personelId}
-                onChange={(e) => setPersonelId(e.target.value)}
-                className="focus-ring w-full rounded-xl border border-line px-3.5 py-2.5 text-sm bg-surface"
-              >
-                {personelListesi.map((p) => (
-                  <option key={p.id} value={p.id}>{p.adSoyad || p.id}</option>
-                ))}
-              </select>
+              <>
+                <select
+                  value={personelId}
+                  onChange={(e) => setPersonelId(e.target.value)}
+                  className="focus-ring w-full rounded-xl border border-line px-3.5 py-2.5 text-sm bg-surface"
+                >
+                  {personelListesi.map((p) => (
+                    <option key={p.id} value={p.id}>{p.adSoyad || p.id}</option>
+                  ))}
+                </select>
+                {personelId && (
+                  <p className="text-[11px] text-gray-400 mt-1 font-mono">
+                    Seçili: {personelId}
+                  </p>
+                )}
+              </>
             )}
           </div>
           <div>

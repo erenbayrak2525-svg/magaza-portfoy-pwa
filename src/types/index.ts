@@ -6,6 +6,7 @@ export interface Kullanici {
   eposta: string;
   rol: Rol;
   bolgeId?: string;
+  sonGorulme?: string;
 }
 
 export type GorevDurumu = "bekliyor" | "devam_ediyor" | "tamamlandi" | "onay_bekliyor" | "reddedildi";
@@ -70,6 +71,7 @@ export interface StokUrunu {
   urunKodu: string;          // ör. "7026" (ürün adının başındaki stil numarası)
   urunAdi: string;           // ör. "XLO Dikişli Paça Bol Paça Pantolon"
   varyantlar: StokVaryanti[]; // her renk+beden kombinasyonu için ayrı stok adedi
+  fiyat?: number;
   gorselUrl?: string;
   etiketler: string[];
   guncellemeTarihi: string;

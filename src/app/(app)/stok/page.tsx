@@ -115,7 +115,14 @@ function StokListesi({ urunler }: { urunler: StokUrunu[] }) {
                     </div>
                   )}
                 </div>
-                <span className="text-sm font-semibold shrink-0">{toplamAdet} adet</span>
+                <div className="flex flex-col items-end shrink-0">
+                  <span className="text-sm font-semibold">{toplamAdet} adet</span>
+                  {urun.fiyat != null && (
+                    <span className="text-xs text-gray-500">
+                      {urun.fiyat.toLocaleString("tr-TR", { style: "currency", currency: "TRY", maximumFractionDigits: 0 })}
+                    </span>
+                  )}
+                </div>
               </div>
             </Kart>
           </Link>

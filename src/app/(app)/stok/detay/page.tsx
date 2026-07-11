@@ -10,6 +10,7 @@ import { kuyrugaEkle } from "@/lib/outbox";
 import { kuyruguSenkronEt } from "@/lib/senkron";
 import { useCevrimici } from "@/lib/useCevrimici";
 import { gorselSikistir } from "@/lib/gorselSikistir";
+import { stokPivotOlustur } from "@/lib/stokPivot";
 import Kart from "@/components/ui/Kart";
 import Buton from "@/components/ui/Buton";
 
@@ -36,6 +37,7 @@ function StokDetayIcerik() {
   const [etiketler, setEtiketler] = useState<string[]>([]);
   const [urunAdiDuzenle, setUrunAdiDuzenle] = useState("");
   const [urunKoduDuzenle, setUrunKoduDuzenle] = useState("");
+  const [fiyatDuzenle, setFiyatDuzenle] = useState("");
   const [varyantlarDuzenle, setVaryantlarDuzenle] = useState<StokVaryanti[]>([]);
   const [duzenleModu, setDuzenleModu] = useState(false);
   const [ilkYuklemeYapildi, setIlkYuklemeYapildi] = useState(false);
@@ -52,6 +54,7 @@ function StokDetayIcerik() {
       setEtiketler(urun.etiketler ?? []);
       setUrunAdiDuzenle(urun.urunAdi ?? "");
       setUrunKoduDuzenle(urun.urunKodu ?? "");
+      setFiyatDuzenle(urun.fiyat != null ? String(urun.fiyat) : "");
       setVaryantlarDuzenle(urun.varyantlar ?? []);
       setIlkYuklemeYapildi(true);
     }
@@ -121,6 +124,7 @@ function StokDetayIcerik() {
           etiketler,
           urunAdi: urunAdiDuzenle,
           urunKodu: urunKoduDuzenle,
+          fiyat: fiyatDuzenle ? Number(fiyatDuzenle) : null,
           varyantlar: varyantlarDuzenle
         }
       });
@@ -167,11 +171,24 @@ function StokDetayIcerik() {
                 placeholder="Ürün kodu"
                 className="focus-ring w-full rounded-lg border border-line px-2.5 py-1.5 text-xs font-mono"
               />
+              <input
+                type="number"
+                inputMode="decimal"
+                value={fiyatDuzenle}
+                onChange={(e) => setFiyatDuzenle(e.target.value)}
+                placeholder="Fiyat (₺)"
+                className="focus-ring w-full rounded-lg border border-line px-2.5 py-1.5 text-xs"
+              />
             </div>
           ) : (
             <div>
               <p className="font-semibold text-sm">{urun.urunAdi || "(isimsiz ürün)"}</p>
               <p className="text-xs text-gray-500 font-mono mt-0.5">{urun.urunKodu || "—"}</p>
+              {urun.fiyat != null && (
+                <p className="text-sm font-semibold text-brand-600 mt-1">
+                  {urun.fiyat.toLocaleString("tr-TR", { style: "currency", currency: "TRY" })}
+                </p>
+              )}
             </div>
           )}
           <button
@@ -229,24 +246,40 @@ function StokDetayIcerik() {
         ) : (!urun.varyantlar || urun.varyantlar.length === 0) ? (
           <p className="text-sm text-gray-400">Veri yok</p>
         ) : (
-          <table className="w-full text-xs">
-            <thead>
-              <tr className="border-b border-line text-left text-gray-500">
-                <th className="pb-2 pr-3">Renk</th>
-                <th className="pb-2 pr-3">Beden</th>
-                <th className="pb-2">Adet</th>
-              </tr>
-            </thead>
-            <tbody>
-              {urun.varyantlar.map((v, i) => (
-                <tr key={i} className="border-b border-line last:border-0">
-                  <td className="py-1.5 pr-3">{v.renk}</td>
-                  <td className="py-1.5 pr-3">{v.beden}</td>
-                  <td className="py-1.5 font-medium">{v.adet}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+          (() => {
+            const pivot = stokPivotOlustur(urun.varyantlar);
+            return (
+              <table className="w-full text-xs">
+                <thead>
+                  <tr className="border-b border-line text-left text-gray-500">
+                    <th className="pb-2 pr-3">Beden \ Renk</th>
+                    {pivot.renkler.map((renk) => (
+                      <th key={renk} className="pb-2 pr-3 text-center">{renk}</th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {pivot.bedenler.map((beden) => (
+                    <tr key={beden} className="border-b border-line last:border-0">
+                      <td className="py-1.5 pr-3 font-medium">{beden}</td>
+                      {pivot.renkler.map((renk) => {
+                        const adet = pivot.tablo[beden]?.[renk];
+                        return (
+                          <td key={renk} className="py-1.5 pr-3 text-center">
+                            {adet ? (
+                              <span className={adet === 0 ? "text-gray-300" : "text-ink"}>{adet}</span>
+                            ) : (
+                              <span className="text-gray-300">—</span>
+                            )}
+                          </td>
+                        );
+                      })}
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            );
+          })()
         )}
         {!duzenleModu && (
           <p className="text-[11px] text-gray-400 mt-3">

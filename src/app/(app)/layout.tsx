@@ -5,6 +5,7 @@ import { useRouter, usePathname } from "next/navigation";
 import { useAuthStore } from "@/store/authStore";
 import UstBar from "@/components/UstBar";
 import AltMenu from "@/components/AltMenu";
+import VarlikTakibi from "@/components/VarlikTakibi";
 
 const BASLIKLAR: Record<string, string> = {
   "/panel": "Panel",
@@ -41,6 +42,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
       <UstBar baslik={baslikBul(pathname || "")} />
       <main className="flex-1 px-4 py-4 pb-24 max-w-2xl w-full mx-auto">{children}</main>
       <AltMenu rol={kullanici.rol} />
+      <VarlikTakibi />
     </div>
   );
 }
