@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import { signOut } from "firebase/auth";
 import { auth, firebaseYapilandirildi } from "@/lib/firebaseClient";
 import { useAuthStore } from "@/store/authStore";
-import { useFirestoreListesi } from "@/lib/firestoreOkuma";
+import { useFirestoreListesi, belgeYaz, belgeSil } from "@/lib/firestoreOkuma";
 import { adSoyadBul } from "@/lib/adSoyadBul";
 import type { Kullanici } from "@/types";
 import Kart from "@/components/ui/Kart";
@@ -35,6 +35,46 @@ export default function ProfilSayfasi() {
   const cikisYap = useAuthStore((s) => s.cikisYap);
   const [cikisYapiliyor, setCikisYapiliyor] = useState(false);
   const { veri: tumUyeler, yukleniyor: uyelerYukleniyor, yenile: uyeleriYenile } = useFirestoreListesi<Kullanici>("profiles");
+
+  // Üye düzenleme durumu (admin, isim/rol düzeltmek ve duplicate kayıt silmek için)
+  const [duzenlenenId, setDuzenlenenId] = useState<string | null>(null);
+  const [duzenlenenAd, setDuzenlenenAd] = useState("");
+  const [duzenlenenRol, setDuzenlenenRol] = useState("personel");
+  const [uyeKaydediliyor, setUyeKaydediliyor] = useState(false);
+  const [uyeSiliniyorId, setUyeSiliniyorId] = useState<string | null>(null);
+
+  function duzenlemeyeBasla(uye: Kullanici) {
+    setDuzenlenenId(uye.id);
+    setDuzenlenenAd(adSoyadBul(uye) || "");
+    setDuzenlenenRol(uye.rol || "personel");
+  }
+
+  async function uyeKaydet() {
+    if (!duzenlenenId) return;
+    setUyeKaydediliyor(true);
+    try {
+      await belgeYaz("profiles", duzenlenenId, { adSoyad: duzenlenenAd.trim(), rol: duzenlenenRol });
+      setDuzenlenenId(null);
+      uyeleriYenile();
+    } catch (err) {
+      alert(err instanceof Error ? err.message : "Kaydedilemedi");
+    } finally {
+      setUyeKaydediliyor(false);
+    }
+  }
+
+  async function uyeSil(id: string) {
+    if (!confirm("Bu üye kaydını silmek istediğine emin misin? (Sadece Firestore'daki profil kaydı silinir, Authentication'daki giriş hesabını Firebase Console'dan ayrıca silmen gerekir.)")) return;
+    setUyeSiliniyorId(id);
+    try {
+      await belgeSil("profiles", id);
+      uyeleriYenile();
+    } catch (err) {
+      alert(err instanceof Error ? err.message : "Silinemedi");
+    } finally {
+      setUyeSiliniyorId(null);
+    }
+  }
 
   if (!kullanici) return null;
 
@@ -94,15 +134,62 @@ export default function ProfilSayfasi() {
             <div className="space-y-2">
               {tumUyeler.map((uye) => {
                 const durum = durumHesapla(uye.sonGorulme);
+                const duzenleniyor = duzenlenenId === uye.id;
                 return (
                   <Kart key={uye.id}>
-                    <div className="flex items-center justify-between gap-2">
-                      <div className="min-w-0">
-                        <p className="text-sm font-medium truncate">{adSoyadBul(uye) || uye.id}</p>
-                        <p className="text-xs text-gray-500">{ROL_ETIKET[uye.rol] || uye.rol}</p>
+                    {duzenleniyor ? (
+                      <div className="space-y-2">
+                        <input
+                          value={duzenlenenAd}
+                          onChange={(e) => setDuzenlenenAd(e.target.value)}
+                          placeholder="Ad Soyad"
+                          className="focus-ring w-full rounded-lg border border-line px-2.5 py-1.5 text-sm"
+                        />
+                        <select
+                          value={duzenlenenRol}
+                          onChange={(e) => setDuzenlenenRol(e.target.value)}
+                          className="focus-ring w-full rounded-lg border border-line px-2.5 py-1.5 text-sm bg-surface"
+                        >
+                          <option value="personel">Personel</option>
+                          <option value="bolge_muduru">Müdür</option>
+                          <option value="admin">Yönetici (Admin)</option>
+                        </select>
+                        <p className="text-[10px] text-gray-400 font-mono break-all">ID: {uye.id}</p>
+                        <div className="flex gap-2">
+                          <Buton varyant="ikincil" className="flex-1" onClick={() => setDuzenlenenId(null)}>
+                            Vazgeç
+                          </Buton>
+                          <Buton className="flex-1" onClick={uyeKaydet} disabled={uyeKaydediliyor || !duzenlenenAd.trim()}>
+                            {uyeKaydediliyor ? "Kaydediliyor…" : "Kaydet"}
+                          </Buton>
+                        </div>
                       </div>
-                      <span className={`text-xs shrink-0 ${durum.renk}`}>{durum.metin}</span>
-                    </div>
+                    ) : (
+                      <div className="flex items-center justify-between gap-2">
+                        <div className="min-w-0">
+                          <p className="text-sm font-medium truncate">{adSoyadBul(uye) || uye.id}</p>
+                          <p className="text-xs text-gray-500">{ROL_ETIKET[uye.rol] || uye.rol}</p>
+                        </div>
+                        <div className="flex items-center gap-2 shrink-0">
+                          <span className={`text-xs ${durum.renk}`}>{durum.metin}</span>
+                          <button
+                            onClick={() => duzenlemeyeBasla(uye)}
+                            className="focus-ring text-sm text-brand-500"
+                            aria-label="Üyeyi düzenle"
+                          >
+                            ✏️
+                          </button>
+                          <button
+                            onClick={() => uyeSil(uye.id)}
+                            disabled={uyeSiliniyorId === uye.id}
+                            className="focus-ring text-sm text-gray-400 hover:text-signal-late"
+                            aria-label="Üyeyi sil"
+                          >
+                            {uyeSiliniyorId === uye.id ? "…" : "🗑️"}
+                          </button>
+                        </div>
+                      </div>
+                    )}
                   </Kart>
                 );
               })}

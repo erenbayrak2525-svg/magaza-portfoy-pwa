@@ -6,6 +6,7 @@ import { useAuthStore } from "@/store/authStore";
 import { useFirestoreBelge, useFirestoreListesi } from "@/lib/firestoreOkuma";
 import { firebaseYapilandirildi } from "@/lib/firebaseClient";
 import { stokBaglamOlustur } from "@/lib/stokBaglamOlustur";
+import { kaliciHafizayiGetir, tamponaEkle, gerekiyorsaOzetleVeKaydet } from "@/lib/aiHafiza";
 import type { AiAyarlari, StokUrunu } from "@/types";
 import Kart from "@/components/ui/Kart";
 import Buton from "@/components/ui/Buton";
@@ -31,7 +32,12 @@ export default function AiSayfasi() {
   const [girdi, setGirdi] = useState("");
   const [gonderiliyor, setGonderiliyor] = useState(false);
   const [hata, setHata] = useState<string | null>(null);
+  const [kaliciNotlar, setKaliciNotlar] = useState<string[]>([]);
   const sonRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    kaliciHafizayiGetir().then(setKaliciNotlar);
+  }, []);
 
   useEffect(() => {
     sonRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -52,7 +58,11 @@ export default function AiSayfasi() {
 
     try {
       const baglam = stokBaglamOlustur(soru, urunler);
-      const sistemMesaji = `${SISTEM_ONEKI}\n\nMağaza stok bilgisi:\n${baglam}`;
+      const hafizaMetni =
+        kaliciNotlar.length > 0
+          ? `\n\nEkip hakkında önceki konuşmalardan öğrendiklerin (kalıcı hafızan):\n${kaliciNotlar.map((n) => `- ${n}`).join("\n")}`
+          : "";
+      const sistemMesaji = `${SISTEM_ONEKI}\n\nMağaza stok bilgisi:\n${baglam}${hafizaMetni}`;
 
       const yanit = await fetch("https://openrouter.ai/api/v1/chat/completions", {
         method: "POST",
@@ -77,6 +87,16 @@ export default function AiSayfasi() {
       const veri = await yanit.json();
       const cevap: string = veri?.choices?.[0]?.message?.content?.trim() || "Cevap alınamadı.";
       setMesajlar((m) => [...m, { rol: "assistant", icerik: cevap }]);
+
+      // Hafıza: bu turu ortak tampona ekle; tampon dolduysa arka planda özetlet.
+      // Sohbeti bekletmemek için await'siz (fire-and-forget) çalışır, hatalar sessizce geçilir.
+      const zaman = new Date().toISOString();
+      tamponaEkle([
+        { rol: "user", icerik: soru, zaman, kullaniciAdi: kullanici?.adSoyad },
+        { rol: "assistant", icerik: cevap, zaman }
+      ])
+        .then((tampon) => gerekiyorsaOzetleVeKaydet(tampon, ayar.apiKey, ayar.model))
+        .catch(() => {});
     } catch (err) {
       setHata(err instanceof Error ? err.message : "Bilinmeyen bir hata oluştu.");
     } finally {
