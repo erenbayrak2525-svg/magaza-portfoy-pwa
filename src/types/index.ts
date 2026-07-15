@@ -122,6 +122,11 @@ export function varsayilanCalismaProgrami(): CalismaProgrami["gunler"] {
   return program;
 }
 
+export interface AiAyarlari {
+  apiKey: string;
+  model: string;
+}
+
 export interface Bildirim {
   id: string;
   baslik: string;

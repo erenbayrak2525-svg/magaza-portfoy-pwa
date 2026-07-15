@@ -102,6 +102,12 @@ export default function PanelSayfasi() {
           </div>
 
           <div className="grid grid-cols-2 gap-3">
+            <Link href="/stok">
+              <Kart className="text-center">
+                <p className="text-2xl mb-1">🏷️</p>
+                <p className="text-sm font-medium">Stok Kataloğu</p>
+              </Kart>
+            </Link>
             <Link href="/admin/analiz">
               <Kart className="text-center">
                 <p className="text-2xl mb-1">📊</p>
@@ -179,6 +185,12 @@ export default function PanelSayfasi() {
               <Kart className="text-center">
                 <p className="text-2xl mb-1">🗓️</p>
                 <p className="text-sm font-medium">Çalışma Saatleri</p>
+              </Kart>
+            </Link>
+            <Link href="/admin/ai-ayarlari">
+              <Kart className="text-center">
+                <p className="text-2xl mb-1">✨</p>
+                <p className="text-sm font-medium">WAS AI Ayarları</p>
               </Kart>
             </Link>
           </div>

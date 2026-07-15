@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { collection, doc, deleteDoc, getDoc, getDocs } from "firebase/firestore";
+import { collection, doc, deleteDoc, getDoc, getDocs, setDoc } from "firebase/firestore";
 import { db, firebaseYapilandirildi } from "@/lib/firebaseClient";
 
 // ÖNEMLİ MALİYET NOTU: Bu dosya bilerek "canlı dinleyici" (onSnapshot) yerine TEK SEFERLİK
@@ -76,4 +76,10 @@ export function useFirestoreBelge<T>(koleksiyonAdi: string, belgeId: string | nu
 export async function belgeSil(koleksiyonAdi: string, belgeId: string): Promise<void> {
   if (!firebaseYapilandirildi) throw new Error("Firebase bağlı değil (demo modu)");
   await deleteDoc(doc(db, koleksiyonAdi, belgeId));
+}
+
+// Ayarlar gibi tek bir belgeyi doğrudan (kuyruğa almadan) yazar — internet gerektirir.
+export async function belgeYaz(koleksiyonAdi: string, belgeId: string, veri: Record<string, unknown>): Promise<void> {
+  if (!firebaseYapilandirildi) throw new Error("Firebase bağlı değil (demo modu)");
+  await setDoc(doc(db, koleksiyonAdi, belgeId), veri, { merge: true });
 }
