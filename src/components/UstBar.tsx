@@ -1,10 +1,25 @@
 "use client";
 
 import Link from "next/link";
+import { useEffect, useState } from "react";
 import { useCevrimici } from "@/lib/useCevrimici";
+import { okunmamisSayisiGetir } from "@/lib/bildirimGonder";
+import { useAuthStore } from "@/store/authStore";
 
 export default function UstBar({ baslik }: { baslik: string }) {
   const cevrimici = useCevrimici();
+  const kullanici = useAuthStore((s) => s.kullanici);
+  const [okunmamisSayisi, setOkunmamisSayisi] = useState(0);
+
+  useEffect(() => {
+    if (!kullanici) return;
+    okunmamisSayisiGetir(kullanici.id).then(setOkunmamisSayisi);
+    // Her 30 saniyede bir güncelle (canlı dinleyici yerine düşük maliyetli polling)
+    const aralik = setInterval(() => {
+      okunmamisSayisiGetir(kullanici.id).then(setOkunmamisSayisi);
+    }, 30_000);
+    return () => clearInterval(aralik);
+  }, [kullanici]);
 
   return (
     <header
@@ -24,9 +39,14 @@ export default function UstBar({ baslik }: { baslik: string }) {
         <Link
           href="/bildirimler"
           aria-label="Bildirimler"
-          className="focus-ring w-9 h-9 flex items-center justify-center rounded-full hover:bg-canvas"
+          className="focus-ring relative w-9 h-9 flex items-center justify-center rounded-full hover:bg-canvas"
         >
           🔔
+          {okunmamisSayisi > 0 && (
+            <span className="absolute top-0.5 right-0.5 w-4 h-4 rounded-full bg-signal-late text-white text-[9px] flex items-center justify-center font-bold">
+              {okunmamisSayisi > 9 ? "9+" : okunmamisSayisi}
+            </span>
+          )}
         </Link>
       </div>
     </header>

@@ -193,6 +193,18 @@ export default function PanelSayfasi() {
                 <p className="text-sm font-medium">WAS AI Ayarları</p>
               </Kart>
             </Link>
+            <Link href="/admin/yeni-kayit">
+              <Kart className="text-center">
+                <p className="text-2xl mb-1">👤</p>
+                <p className="text-sm font-medium">Yeni Kayıt Ekle</p>
+              </Kart>
+            </Link>
+            <Link href="/admin/toplu-mesaj">
+              <Kart className="text-center">
+                <p className="text-2xl mb-1">📣</p>
+                <p className="text-sm font-medium">Toplu Mesaj Gönder</p>
+              </Kart>
+            </Link>
           </div>
 
           <section>

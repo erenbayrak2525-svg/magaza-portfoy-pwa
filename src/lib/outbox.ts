@@ -8,7 +8,7 @@ export const OUTBOX_STORE = "outbox";
 
 export interface OutboxKaydi {
   id: string;                 // crypto.randomUUID()
-  tip: "gorev_tamamla" | "gorev_ata" | "ciro_girisi" | "stok_sayimi" | "denetim_formu" | "stok_urun_guncelle" | "stok_urun_ice_aktar" | "kasa_kaydi_ekle" | "calisma_programi_guncelle";
+  tip: "gorev_tamamla" | "gorev_ata" | "ciro_girisi" | "stok_sayimi" | "denetim_formu" | "stok_urun_guncelle" | "stok_urun_ice_aktar" | "kasa_kaydi_ekle" | "calisma_programi_guncelle" | "bildirim_ekle" | "toplu_bildirim";
   payload: Record<string, unknown>;
   olusturmaZamani: number;
   denemeSayisi: number;

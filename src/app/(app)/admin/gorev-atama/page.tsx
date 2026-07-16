@@ -9,6 +9,7 @@ import { kuyruguSenkronEt } from "@/lib/senkron";
 import { useCevrimici } from "@/lib/useCevrimici";
 import type { Kullanici } from "@/types";
 import { adSoyadBul } from "@/lib/adSoyadBul";
+import { bildirimGonder } from "@/lib/bildirimGonder";
 import Kart from "@/components/ui/Kart";
 import Buton from "@/components/ui/Buton";
 import AdminKorumasi from "@/components/AdminKorumasi";
@@ -69,6 +70,15 @@ function GorevAtamaIcerik() {
             ? `Görev atandı → personel ID: ${personelId}`
             : "Kaydedildi, senkron bekleniyor."
         );
+        if (sonuc.basarili > 0) {
+          // Atanan kişiye bildirim gönder (arka planda, hata sohbeti bozmasın)
+          bildirimGonder(
+            personelId,
+            `Yeni Görev: ${baslik}`,
+            aciklama.slice(0, 100),
+            "/gorevler"
+          ).catch(() => {});
+        }
       } else {
         setDurumMesaji("Çevrimdışısın: görev kaydedildi, bağlantı gelince atanacak.");
       }

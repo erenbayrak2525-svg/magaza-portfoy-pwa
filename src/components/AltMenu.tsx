@@ -55,14 +55,24 @@ export default function AltMenu({ rol }: { rol: Rol }) {
               className="focus-ring flex-1 flex flex-col items-center gap-0.5 pb-2 -mt-5"
             >
               <span
-                className={`w-12 h-12 rounded-full flex items-center justify-center text-xl shadow-card ${
-                  aktif ? "bg-brand-600" : "bg-brand-500"
-                } text-white`}
+                className={`w-12 h-12 rounded-full flex items-center justify-center shadow-card ${
+                  aktif
+                    ? "bg-gradient-to-br from-brand-600 to-brand-700"
+                    : "bg-gradient-to-br from-brand-400 to-brand-600"
+                }`}
               >
-                {oge.ikon}
+                <svg width="26" height="20" viewBox="0 0 26 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path
+                    d="M1 2L6.5 17L10.5 7L13 13L15.5 7L19.5 17L25 2"
+                    stroke="white"
+                    strokeWidth="2.5"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                </svg>
               </span>
               <span className={`text-[11px] ${aktif ? "text-brand-500 font-semibold" : "text-gray-500"}`}>
-                {oge.etiket}
+                WAS AI
               </span>
             </Link>
           );
