@@ -122,12 +122,19 @@ export function varsayilanCalismaProgrami(): CalismaProgrami["gunler"] {
   return program;
 }
 
+export interface UrunKartiVaryanti {
+  renk: string;
+  beden: string;
+  adet: number;
+}
+
 export interface UrunKarti {
   id: string;
   urunKodu: string;
   urunAdi: string;
   renk?: string;
   stokAdedi?: number;
+  varyantlar?: UrunKartiVaryanti[];
   aciklama?: string;
   gelisTarihi?: string;
   bitisTarihi?: string;
