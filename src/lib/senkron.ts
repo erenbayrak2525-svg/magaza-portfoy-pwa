@@ -14,7 +14,8 @@ const KOLEKSIYON_ESLEME: Record<OutboxKaydi["tip"], string> = {
   kasa_kaydi_ekle: "kasa_defteri",
   calisma_programi_guncelle: "calisma_saatleri",
   bildirim_ekle: "bildirimler",
-  toplu_bildirim: "bildirimler"
+  toplu_bildirim: "bildirimler",
+  urun_karti_ekle: "urun_kartlari"
 };
 
 async function kaydiGonder(kayit: OutboxKaydi) {

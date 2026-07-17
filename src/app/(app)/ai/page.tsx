@@ -25,7 +25,7 @@ olmayan bir şeyi bilmiyorsan bunu açıkça söyle. Kombin/stil önerisi isteni
 export default function AiSayfasi() {
   const kullanici = useAuthStore((s) => s.kullanici);
   const { veri: ayar, yukleniyor: ayarYukleniyor } = useFirestoreBelge<AiAyarlari>("ayarlar", "ai");
-  const { veri: canliUrunler } = useFirestoreListesi<StokUrunu>("stok_urunleri");
+  const { veri: canliUrunler, yukleniyor: stokYukleniyor } = useFirestoreListesi<StokUrunu>("stok_urunleri");
   const urunler = firebaseYapilandirildi ? canliUrunler : [];
 
   const [mesajlar, setMesajlar] = useState<SohbetMesaji[]>([]);
@@ -107,7 +107,6 @@ export default function AiSayfasi() {
   if (ayarYukleniyor) {
     return <p className="text-sm text-gray-500 text-center py-16">Yükleniyor…</p>;
   }
-
   if (!ayarliMi) {
     return (
       <div className="text-center py-16 px-4">
@@ -135,6 +134,13 @@ export default function AiSayfasi() {
             <p className="text-sm text-gray-600">
               👋 Merhaba{kullanici ? `, ${kullanici.adSoyad}` : ""}! Ben WAS AI. Stok hakkında soru
               sorabilir ("kırmızı elbise var mı, kaç adet?") veya kombin önerisi isteyebilirsin.
+            </p>
+            <p className={`text-xs mt-2 ${stokYukleniyor ? "text-signal-pending" : urunler.length > 0 ? "text-signal-done" : "text-gray-400"}`}>
+              {stokYukleniyor
+                ? "Stok kataloğu yükleniyor…"
+                : urunler.length > 0
+                ? `✓ ${urunler.length} ürün yüklendi, stok sorularını yanıtlayabilirim`
+                : "Stok kataloğu boş veya yüklenemedi — genel sorularınızı yanıtlayabilirim"}
             </p>
           </Kart>
         )}
@@ -175,8 +181,8 @@ export default function AiSayfasi() {
           placeholder="WAS AI'ye bir şey sor…"
           className="focus-ring flex-1 rounded-xl border border-line px-3.5 py-2.5 text-sm"
         />
-        <Buton type="submit" disabled={gonderiliyor || !girdi.trim()}>
-          Gönder
+        <Buton type="submit" disabled={gonderiliyor || !girdi.trim() || stokYukleniyor}>
+          {stokYukleniyor ? "Stok yükleniyor…" : "Gönder"}
         </Buton>
       </form>
     </div>

@@ -120,6 +120,18 @@ export default function PanelSayfasi() {
                 <p className="text-sm font-medium">Kasa Defteri</p>
               </Kart>
             </Link>
+            <Link href="/urun-kartlari">
+              <Kart className="text-center">
+                <p className="text-2xl mb-1">🗂️</p>
+                <p className="text-sm font-medium">Ürün Kartları</p>
+              </Kart>
+            </Link>
+            <Link href="/admin/toplu-mesaj">
+              <Kart className="text-center">
+                <p className="text-2xl mb-1">📣</p>
+                <p className="text-sm font-medium">Toplu Mesaj</p>
+              </Kart>
+            </Link>
           </div>
 
           <section>
@@ -203,6 +215,12 @@ export default function PanelSayfasi() {
               <Kart className="text-center">
                 <p className="text-2xl mb-1">📣</p>
                 <p className="text-sm font-medium">Toplu Mesaj Gönder</p>
+              </Kart>
+            </Link>
+            <Link href="/urun-kartlari">
+              <Kart className="text-center">
+                <p className="text-2xl mb-1">🗂️</p>
+                <p className="text-sm font-medium">Ürün Kartları</p>
               </Kart>
             </Link>
           </div>
