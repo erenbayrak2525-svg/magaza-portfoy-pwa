@@ -143,8 +143,13 @@ export interface UrunKarti {
 }
 
 export interface AiAyarlari {
-  apiKey: string;
-  model: string;
+  /** Yeni kurulumlarda Google AI Studio önerilir; eski OpenRouter kayıtları korunur. */
+  saglayici?: "google" | "openrouter";
+  googleApiKey?: string;
+  googleModel?: string;
+  /** Eski OpenRouter alanları: geriye dönük uyumluluk için tutulur. */
+  apiKey?: string;
+  model?: string;
 }
 
 export interface Bildirim {
@@ -154,4 +159,22 @@ export interface Bildirim {
   tarih: string;
   okundu: boolean;
   link?: string;
+}
+
+export interface MesajKonusmasi {
+  id: string;
+  katilimcilar: string[];
+  katilimciAdlari: Record<string, string>;
+  sonMesaj?: string;
+  sonMesajTarihi?: string;
+  olusturmaTarihi: string;
+  okunmamisSayilari?: Record<string, number>;
+}
+
+export interface Mesaj {
+  id: string;
+  gonderenId: string;
+  gonderenAdi: string;
+  icerik: string;
+  tarih: string;
 }

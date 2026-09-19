@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import ServiceWorkerKaydi from "@/components/ServiceWorkerKaydi";
+import FcmKaydi from "@/components/FcmKaydi";
 import "./globals.css";
 
 // "./manifest.webmanifest" gibi NOKTA-göreli yollar, sayfanın kendi URL'ine göre çözülüyor —
@@ -42,6 +43,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <body className="font-sans bg-canvas text-ink min-h-screen">
         {children}
         <ServiceWorkerKaydi />
+        <FcmKaydi />
       </body>
     </html>
   );

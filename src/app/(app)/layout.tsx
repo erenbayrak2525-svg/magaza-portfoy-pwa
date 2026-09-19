@@ -10,6 +10,7 @@ import VarlikTakibi from "@/components/VarlikTakibi";
 const BASLIKLAR: Record<string, string> = {
   "/panel": "Panel",
   "/gorevler": "Görevler",
+  "/mesajlar": "Mesajlar",
   "/formlar": "Akıllı Formlar",
   "/iletisim": "İletişim Dizini",
   "/profil": "Profil",

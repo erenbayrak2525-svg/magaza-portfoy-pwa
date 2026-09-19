@@ -7,6 +7,7 @@ import { useFirestoreBelge, useFirestoreListesi } from "@/lib/firestoreOkuma";
 import { firebaseYapilandirildi } from "@/lib/firebaseClient";
 import { stokBaglamOlustur } from "@/lib/stokBaglamOlustur";
 import { kaliciHafizayiGetir, tamponaEkle, gerekiyorsaOzetleVeKaydet } from "@/lib/aiHafiza";
+import { aiCevapOlustur, aiAyarlariTamMi } from "@/lib/aiClient";
 import type { AiAyarlari, StokUrunu } from "@/types";
 import Kart from "@/components/ui/Kart";
 import Buton from "@/components/ui/Buton";
@@ -43,7 +44,7 @@ export default function AiSayfasi() {
     sonRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [mesajlar, gonderiliyor]);
 
-  const ayarliMi = Boolean(ayar?.apiKey && ayar?.model);
+  const ayarliMi = aiAyarlariTamMi(ayar);
 
   async function gonder(e: React.FormEvent) {
     e.preventDefault();
@@ -64,28 +65,11 @@ export default function AiSayfasi() {
           : "";
       const sistemMesaji = `${SISTEM_ONEKI}\n\nMağaza stok bilgisi:\n${baglam}${hafizaMetni}`;
 
-      const yanit = await fetch("https://openrouter.ai/api/v1/chat/completions", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${ayar.apiKey}`
-        },
-        body: JSON.stringify({
-          model: ayar.model,
-          messages: [
-            { role: "system", content: sistemMesaji },
-            ...yeniMesajlar.slice(-8).map((m) => ({ role: m.rol, content: m.icerik }))
-          ]
-        })
-      });
-
-      if (!yanit.ok) {
-        const hataMetni = await yanit.text().catch(() => "");
-        throw new Error(`OpenRouter hata verdi (${yanit.status}): ${hataMetni.slice(0, 200) || "detay yok"}`);
-      }
-
-      const veri = await yanit.json();
-      const cevap: string = veri?.choices?.[0]?.message?.content?.trim() || "Cevap alınamadı.";
+      const cevap = await aiCevapOlustur(
+        ayar,
+        sistemMesaji,
+        yeniMesajlar.slice(-8).map((m) => ({ rol: m.rol, icerik: m.icerik }))
+      );
       setMesajlar((m) => [...m, { rol: "assistant", icerik: cevap }]);
 
       // Hafıza: bu turu ortak tampona ekle; tampon dolduysa arka planda özetlet.
@@ -95,7 +79,7 @@ export default function AiSayfasi() {
         { rol: "user", icerik: soru, zaman, kullaniciAdi: kullanici?.adSoyad },
         { rol: "assistant", icerik: cevap, zaman }
       ])
-        .then((tampon) => gerekiyorsaOzetleVeKaydet(tampon, ayar.apiKey, ayar.model))
+        .then((tampon) => gerekiyorsaOzetleVeKaydet(tampon, ayar))
         .catch(() => {});
     } catch (err) {
       setHata(err instanceof Error ? err.message : "Bilinmeyen bir hata oluştu.");

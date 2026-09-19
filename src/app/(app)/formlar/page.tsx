@@ -5,6 +5,7 @@ import { useAuthStore } from "@/store/authStore";
 import Kart from "@/components/ui/Kart";
 
 const FORMLAR = [
+  { href: "/gorevler", ikon: "✅", baslik: "Görevler", aciklama: "Atanan ve tamamlanan görevler", roller: ["personel", "bolge_muduru", "admin"] },
   { href: "/formlar/ciro", ikon: "💰", baslik: "Ciro Girişi", aciklama: "Günlük ciro ve fiş adedi", roller: ["bolge_muduru", "admin"] },
   { href: "/formlar/stok-sayimi", ikon: "📦", baslik: "Stok Sayımı", aciklama: "Ürün bazlı sayım kaydı", roller: ["personel", "bolge_muduru", "admin"] },
   { href: "/formlar/denetim", ikon: "🧾", baslik: "Periyodik Denetim", aciklama: "Mağaza denetim formu", roller: ["personel", "bolge_muduru", "admin"] },
@@ -31,6 +32,19 @@ export default function FormlarSayfasi() {
           </Kart>
         </Link>
       ))}
+      {kullanici?.rol === "admin" && (
+        <Link href="/admin/gorev-atama">
+          <Kart>
+            <div className="flex items-center gap-3">
+              <span className="text-2xl">📤</span>
+              <div>
+                <p className="font-medium text-sm">Görev Ata</p>
+                <p className="text-xs text-gray-500">Personele yeni görev gönder</p>
+              </div>
+            </div>
+          </Kart>
+        </Link>
+      )}
     </div>
   );
 }

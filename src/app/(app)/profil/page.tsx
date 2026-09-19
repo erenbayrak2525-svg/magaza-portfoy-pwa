@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { signOut } from "firebase/auth";
@@ -8,6 +8,7 @@ import { auth, firebaseYapilandirildi } from "@/lib/firebaseClient";
 import { useAuthStore } from "@/store/authStore";
 import { useFirestoreListesi, belgeYaz, belgeSil } from "@/lib/firestoreOkuma";
 import { adSoyadBul } from "@/lib/adSoyadBul";
+import { bildirimIzniniAc } from "@/lib/fcm";
 import type { Kullanici } from "@/types";
 import Kart from "@/components/ui/Kart";
 import Buton from "@/components/ui/Buton";
@@ -34,6 +35,9 @@ export default function ProfilSayfasi() {
   const kullanici = useAuthStore((s) => s.kullanici);
   const cikisYap = useAuthStore((s) => s.cikisYap);
   const [cikisYapiliyor, setCikisYapiliyor] = useState(false);
+  const [bildirimIzni, setBildirimIznini] = useState<NotificationPermission | "unsupported">("default");
+  const [bildirimAciliyor, setBildirimAciliyor] = useState(false);
+  const [bildirimMesaji, setBildirimMesaji] = useState<string | null>(null);
   const { veri: tumUyeler, yukleniyor: uyelerYukleniyor, yenile: uyeleriYenile } = useFirestoreListesi<Kullanici>("profiles");
 
   // Üye düzenleme durumu (admin, isim/rol düzeltmek ve duplicate kayıt silmek için)
@@ -42,6 +46,10 @@ export default function ProfilSayfasi() {
   const [duzenlenenRol, setDuzenlenenRol] = useState("personel");
   const [uyeKaydediliyor, setUyeKaydediliyor] = useState(false);
   const [uyeSiliniyorId, setUyeSiliniyorId] = useState<string | null>(null);
+
+  useEffect(() => {
+    setBildirimIznini(typeof Notification === "undefined" ? "unsupported" : Notification.permission);
+  }, []);
 
   function duzenlemeyeBasla(uye: Kullanici) {
     setDuzenlenenId(uye.id);
@@ -90,6 +98,21 @@ export default function ProfilSayfasi() {
     }
   }
 
+  async function bildirimleriAc() {
+    if (!kullanici) return;
+    setBildirimAciliyor(true);
+    setBildirimMesaji(null);
+    try {
+      const izin = await bildirimIzniniAc(kullanici.id);
+      setBildirimIznini(izin);
+      setBildirimMesaji(izin === "granted" ? "Telefon bildirimleri açıldı." : "Bildirim izni verilmedi.");
+    } catch (err) {
+      setBildirimMesaji(err instanceof Error ? err.message : "Bildirimler açılamadı.");
+    } finally {
+      setBildirimAciliyor(false);
+    }
+  }
+
   return (
     <div className="space-y-4">
       <Kart>
@@ -119,6 +142,27 @@ export default function ProfilSayfasi() {
           </div>
         </Kart>
       </Link>
+
+      {firebaseYapilandirildi && (
+        <Kart>
+          <div className="flex items-center justify-between gap-3">
+            <div className="min-w-0">
+              <p className="text-sm font-medium">Telefon bildirimleri</p>
+              <p className="text-xs text-gray-500 mt-0.5">
+                Mesaj ve görev bildirimlerini uygulama kapalıyken de al.
+              </p>
+            </div>
+            <Buton
+              varyant={bildirimIzni === "granted" ? "ikincil" : "birincil"}
+              onClick={bildirimleriAc}
+              disabled={bildirimAciliyor || bildirimIzni === "granted" || bildirimIzni === "unsupported"}
+            >
+              {bildirimAciliyor ? "Açılıyor…" : bildirimIzni === "granted" ? "Açık" : "Bildirimleri Aç"}
+            </Buton>
+          </div>
+          {bildirimMesaji && <p className="text-xs text-gray-500 mt-2">{bildirimMesaji}</p>}
+        </Kart>
+      )}
 
       {kullanici.rol === "admin" && (
         <section>

@@ -1,25 +1,14 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
 import { useCevrimici } from "@/lib/useCevrimici";
-import { okunmamisSayisiGetir } from "@/lib/bildirimGonder";
 import { useAuthStore } from "@/store/authStore";
+import { useCanliOkunmamisBildirimSayisi } from "@/lib/canliBildirimler";
 
 export default function UstBar({ baslik }: { baslik: string }) {
   const cevrimici = useCevrimici();
   const kullanici = useAuthStore((s) => s.kullanici);
-  const [okunmamisSayisi, setOkunmamisSayisi] = useState(0);
-
-  useEffect(() => {
-    if (!kullanici) return;
-    okunmamisSayisiGetir(kullanici.id).then(setOkunmamisSayisi);
-    // Her 30 saniyede bir güncelle (canlı dinleyici yerine düşük maliyetli polling)
-    const aralik = setInterval(() => {
-      okunmamisSayisiGetir(kullanici.id).then(setOkunmamisSayisi);
-    }, 30_000);
-    return () => clearInterval(aralik);
-  }, [kullanici]);
+  const okunmamisSayisi = useCanliOkunmamisBildirimSayisi(kullanici?.id);
 
   return (
     <header

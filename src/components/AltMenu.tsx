@@ -3,6 +3,8 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import type { Rol } from "@/types";
+import { useAuthStore } from "@/store/authStore";
+import { useCanliMesajKonusmalari } from "@/lib/mesajlar";
 
 interface MenuOgesi {
   href: string;
@@ -14,23 +16,23 @@ interface MenuOgesi {
 const MENU: Record<Rol, MenuOgesi[]> = {
   personel: [
     { href: "/panel", etiket: "Panel", ikon: "🏠" },
-    { href: "/gorevler", etiket: "Görevler", ikon: "✅" },
+    { href: "/mesajlar", etiket: "Mesajlar", ikon: "💬" },
     { href: "/ai", etiket: "WAS AI", ikon: "✨", vurgulu: true },
     { href: "/formlar", etiket: "Formlar", ikon: "📝" },
     { href: "/profil", etiket: "Profil", ikon: "👤" }
   ],
   bolge_muduru: [
     { href: "/panel", etiket: "Panel", ikon: "🏠" },
-    { href: "/gorevler", etiket: "Görevler", ikon: "✅" },
+    { href: "/mesajlar", etiket: "Mesajlar", ikon: "💬" },
     { href: "/ai", etiket: "WAS AI", ikon: "✨", vurgulu: true },
     { href: "/formlar", etiket: "Formlar", ikon: "📝" },
     { href: "/profil", etiket: "Profil", ikon: "👤" }
   ],
   admin: [
     { href: "/panel", etiket: "Panel", ikon: "🏠" },
-    { href: "/stok", etiket: "Stok", ikon: "🏷️" },
+    { href: "/mesajlar", etiket: "Mesajlar", ikon: "💬" },
     { href: "/ai", etiket: "WAS AI", ikon: "✨", vurgulu: true },
-    { href: "/admin/gorev-atama", etiket: "Görev Ata", ikon: "📤" },
+    { href: "/formlar", etiket: "Formlar", ikon: "📝" },
     { href: "/profil", etiket: "Profil", ikon: "👤" }
   ]
 };
@@ -38,6 +40,8 @@ const MENU: Record<Rol, MenuOgesi[]> = {
 export default function AltMenu({ rol }: { rol: Rol }) {
   const yol = usePathname();
   const ogeler = MENU[rol];
+  const kullanici = useAuthStore((s) => s.kullanici);
+  const { okunmamis: okunmamisMesaj } = useCanliMesajKonusmalari(kullanici?.id);
 
   return (
     <nav
@@ -86,7 +90,14 @@ export default function AltMenu({ rol }: { rol: Rol }) {
               aktif ? "text-brand-500 font-semibold" : "text-gray-500"
             }`}
           >
-            <span className="text-lg leading-none">{oge.ikon}</span>
+            <span className="relative text-lg leading-none">
+              {oge.ikon}
+              {oge.href === "/mesajlar" && okunmamisMesaj > 0 && (
+                <span className="absolute -top-2 -right-3 min-w-4 h-4 px-1 rounded-full bg-signal-late text-white text-[9px] flex items-center justify-center font-bold">
+                  {okunmamisMesaj > 9 ? "9+" : okunmamisMesaj}
+                </span>
+              )}
+            </span>
             {oge.etiket}
           </Link>
         );

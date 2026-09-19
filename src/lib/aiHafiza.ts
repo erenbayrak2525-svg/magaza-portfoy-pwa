@@ -11,6 +11,8 @@
 
 import { doc, getDoc, setDoc } from "firebase/firestore";
 import { db, firebaseYapilandirildi } from "@/lib/firebaseClient";
+import { aiCevapOlustur } from "@/lib/aiClient";
+import type { AiAyarlari } from "@/types";
 
 const TAMPON_LIMITI = 20;
 const KALICI_NOT_LIMITI = 30; // kalıcı liste sonsuz büyümesin
@@ -58,8 +60,7 @@ async function kaliciNotEkle(yeniNot: string): Promise<void> {
 // Başarısız olursa sessizce geçer (hafıza kritik değil, sohbeti bozmasın).
 export async function gerekiyorsaOzetleVeKaydet(
   tampon: TamponMesaj[],
-  apiKey: string,
-  model: string
+  ayar: AiAyarlari
 ): Promise<void> {
   if (tampon.length < TAMPON_LIMITI) return;
 
@@ -68,28 +69,11 @@ export async function gerekiyorsaOzetleVeKaydet(
       .map((m) => `${m.rol === "user" ? `Kullanıcı${m.kullaniciAdi ? ` (${m.kullaniciAdi})` : ""}` : "WAS AI"}: ${m.icerik}`)
       .join("\n");
 
-    const yanit = await fetch("https://openrouter.ai/api/v1/chat/completions", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${apiKey}`
-      },
-      body: JSON.stringify({
-        model,
-        messages: [
-          {
-            role: "system",
-            content:
-              "Sen bir hafıza özetleyicisisin. Sana bir mağaza ekibinin yapay zeka asistanıyla yaptığı son konuşmalar verilecek. Görevin: tekrar eden konuları, ekibin alışkanlıklarını, sık sorulan soru kalıplarını ve ileride hatırlamaya değer kalıcı bilgileri 1-3 kısa maddede özetlemek. SADECE gerçekten tekrar eden veya kalıcı değeri olan şeyleri yaz; tek seferlik/önemsiz konuşmaları alma. Hatırlamaya değer hiçbir şey yoksa sadece 'YOK' yaz. Maddeleri kısa tut, madde başına en fazla bir cümle."
-          },
-          { role: "user", content: konusmaMetni }
-        ]
-      })
-    });
-
-    if (!yanit.ok) throw new Error(`Özetleme isteği başarısız: ${yanit.status}`);
-    const veri = await yanit.json();
-    const ozet: string = veri?.choices?.[0]?.message?.content?.trim() || "";
+    const ozet = await aiCevapOlustur(
+      ayar,
+      "Sen bir hafıza özetleyicisisin. Sana bir mağaza ekibinin yapay zeka asistanıyla yaptığı son konuşmalar verilecek. Görevin: tekrar eden konuları, ekibin alışkanlıklarını, sık sorulan soru kalıplarını ve ileride hatırlamaya değer kalıcı bilgileri 1-3 kısa maddede özetlemek. SADECE gerçekten tekrar eden veya kalıcı değeri olan şeyleri yaz; tek seferlik/önemsiz konuşmaları alma. Hatırlamaya değer hiçbir şey yoksa sadece 'YOK' yaz. Maddeleri kısa tut, madde başına en fazla bir cümle.",
+      [{ rol: "user", icerik: konusmaMetni }]
+    );
 
     if (ozet && ozet.toUpperCase() !== "YOK") {
       await kaliciNotEkle(ozet);

@@ -4,38 +4,23 @@ import { useState } from "react";
 import Link from "next/link";
 import { doc, updateDoc } from "firebase/firestore";
 import { db, firebaseYapilandirildi } from "@/lib/firebaseClient";
-import { useFirestoreListesi } from "@/lib/firestoreOkuma";
+import { useCanliBildirimler } from "@/lib/canliBildirimler";
 import { useAuthStore } from "@/store/authStore";
 import { MOCK_BILDIRIMLER } from "@/data/mockData";
 import Kart from "@/components/ui/Kart";
 
-interface FirestoreBildirim {
-  id: string;
-  kullaniciId: string;
-  baslik: string;
-  mesaj: string;
-  tarih: string;
-  okundu: boolean;
-  link?: string;
-}
-
 export default function BildirimlerSayfasi() {
   const kullanici = useAuthStore((s) => s.kullanici);
-  const { veri: tumBildirimler, yukleniyor, yenile } = useFirestoreListesi<FirestoreBildirim>("bildirimler");
+  const { veri: tumBildirimler, yukleniyor } = useCanliBildirimler(kullanici?.id);
   const [okunuyorId, setOkunuyorId] = useState<string | null>(null);
 
-  const bildirimler = firebaseYapilandirildi
-    ? tumBildirimler
-        .filter((b) => b.kullaniciId === kullanici?.id)
-        .sort((a, b) => (a.tarih < b.tarih ? 1 : -1))
-    : MOCK_BILDIRIMLER;
+  const bildirimler = firebaseYapilandirildi ? tumBildirimler : MOCK_BILDIRIMLER;
 
   async function okunduIsaretle(id: string) {
     if (!firebaseYapilandirildi) return;
     setOkunuyorId(id);
     try {
       await updateDoc(doc(db, "bildirimler", id), { okundu: true });
-      yenile();
     } finally {
       setOkunuyorId(null);
     }
