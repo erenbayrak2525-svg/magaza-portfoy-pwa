@@ -10,6 +10,7 @@ import {
   mesajGonder,
   mesajKonusmaIdsi,
   mesajlariOkunduIsaretle,
+  yeniGrupKonusmaIdsi,
   useCanliMesajKonusmalari,
   useCanliMesajlar
 } from "@/lib/mesajlar";
@@ -40,6 +41,9 @@ function MesajlarIcerik() {
   const seciliParametre = params.get("konusma");
   const [seciliKonusmaId, setSeciliKonusmaId] = useState<string | null>(seciliParametre);
   const [yeniMesajAcik, setYeniMesajAcik] = useState(false);
+  const [yeniKonusmaTuru, setYeniKonusmaTuru] = useState<"birebir" | "grup">("birebir");
+  const [seciliAliciIds, setSeciliAliciIds] = useState<string[]>([]);
+  const [grupAdi, setGrupAdi] = useState("");
   const [profilArama, setProfilArama] = useState("");
   const [girdi, setGirdi] = useState("");
   const [gonderiliyor, setGonderiliyor] = useState(false);
@@ -56,12 +60,12 @@ function MesajlarIcerik() {
   const profiller = firebaseYapilandirildi ? canliProfiller : MOCK_KULLANICILAR;
   const hedefler = profiller.filter((profil) => profil.id !== kullanici?.id);
   const seciliKonusma = konusmalar.find((konusma) => konusma.id === seciliKonusmaId);
-  const seciliAlici = useMemo(() => {
-    if (!seciliKonusmaId || !kullanici) return null;
-    const aliciId = seciliKonusma?.katilimcilar.find((id) => id !== kullanici.id) ??
-      hedefler.find((profil) => mesajKonusmaIdsi(kullanici.id, profil.id) === seciliKonusmaId)?.id;
-    return hedefler.find((profil) => profil.id === aliciId) ?? null;
-  }, [hedefler, kullanici, seciliKonusma, seciliKonusmaId]);
+  const seciliAliciIdsGercek = seciliKonusma?.katilimcilar.filter((id) => id !== kullanici?.id) ?? seciliAliciIds;
+  const seciliAlicilar = useMemo(
+    () => hedefler.filter((profil) => seciliAliciIdsGercek.includes(profil.id)),
+    [hedefler, seciliAliciIdsGercek]
+  );
+  const seciliAlici = seciliAlicilar[0] ?? null;
 
   useEffect(() => {
     if (seciliParametre !== seciliKonusmaId) setSeciliKonusmaId(seciliParametre);
@@ -80,6 +84,8 @@ function MesajlarIcerik() {
 
   function konusmayiAc(id: string) {
     setSeciliKonusmaId(id);
+    setSeciliAliciIds([]);
+    setGrupAdi("");
     setYeniMesajAcik(false);
     setHata(null);
     router.replace(`/mesajlar?konusma=${encodeURIComponent(id)}`, { scroll: false });
@@ -87,12 +93,35 @@ function MesajlarIcerik() {
 
   function yeniKonusmaBaslat(id: string) {
     if (!kullanici) return;
-    konusmayiAc(mesajKonusmaIdsi(kullanici.id, id));
+    setSeciliKonusmaId(mesajKonusmaIdsi(kullanici.id, id));
+    setSeciliAliciIds([id]);
+    setYeniKonusmaTuru("birebir");
+    setGrupAdi("");
+    setYeniMesajAcik(false);
+    setHata(null);
+    router.replace(`/mesajlar?konusma=${encodeURIComponent(mesajKonusmaIdsi(kullanici.id, id))}`, { scroll: false });
+  }
+
+  function grupUyesiDegistir(id: string) {
+    setSeciliAliciIds((onceki) => onceki.includes(id) ? onceki.filter((uyeId) => uyeId !== id) : [...onceki, id]);
+  }
+
+  function yeniGrupBaslat() {
+    if (seciliAliciIds.length < 2) {
+      setHata("Grup oluşturmak için en az iki kişi seçmelisin.");
+      return;
+    }
+    const id = yeniGrupKonusmaIdsi();
+    setSeciliKonusmaId(id);
+    setYeniKonusmaTuru("grup");
+    setYeniMesajAcik(false);
+    setHata(null);
+    router.replace(`/mesajlar?konusma=${encodeURIComponent(id)}`, { scroll: false });
   }
 
   async function gonder(e: React.FormEvent) {
     e.preventDefault();
-    if (!kullanici || !seciliKonusmaId || !seciliAlici || !girdi.trim()) return;
+    if (!kullanici || !seciliKonusmaId || seciliAlicilar.length === 0 || !girdi.trim()) return;
     setGonderiliyor(true);
     setHata(null);
     try {
@@ -100,10 +129,14 @@ function MesajlarIcerik() {
         konusmaId: seciliKonusmaId,
         gonderenId: kullanici.id,
         gonderenAdi: kullanici.adSoyad,
-        aliciId: seciliAlici.id,
-        aliciAdi: adSoyadBul(seciliAlici) || seciliAlici.id,
+        aliciIds: seciliAlicilar.map((profil) => profil.id),
+        aliciAdlari: Object.fromEntries(
+          seciliAlicilar.map((profil) => [profil.id, adSoyadBul(profil) || profil.id])
+        ),
         icerik: girdi,
-        mevcutKonusma: seciliKonusma
+        mevcutKonusma: seciliKonusma,
+        tur: yeniKonusmaTuru === "grup" || seciliAlicilar.length > 1 || seciliKonusma?.tur === "grup" ? "grup" : "birebir",
+        grupAdi
       });
       setGirdi("");
     } catch (err) {
@@ -120,8 +153,10 @@ function MesajlarIcerik() {
   });
 
   const seciliBaslik = seciliAlici
-    ? adSoyadBul(seciliAlici) || seciliAlici.id
-    : seciliKonusma?.katilimciAdlari?.[seciliKonusma.katilimcilar.find((id) => id !== kullanici.id) ?? ""] ?? "Yeni konuşma";
+    ? seciliAlicilar.length > 1 || seciliKonusma?.tur === "grup"
+      ? seciliKonusma?.grupAdi || grupAdi || "Ekip grubu"
+      : adSoyadBul(seciliAlici) || seciliAlici.id
+    : seciliKonusma?.grupAdi || "Yeni konuşma";
 
   return (
     <div className="space-y-3">
@@ -145,7 +180,32 @@ function MesajlarIcerik() {
 
           {yeniMesajAcik && (
             <Kart className="mb-3">
-              <p className="text-sm font-medium mb-2">Kime mesaj göndereceksin?</p>
+              <div className="flex gap-2 mb-3">
+                <button
+                  type="button"
+                  onClick={() => setYeniKonusmaTuru("birebir")}
+                  className={`focus-ring flex-1 rounded-lg px-3 py-2 text-sm ${yeniKonusmaTuru === "birebir" ? "bg-brand-500 text-white" : "bg-canvas text-gray-600"}`}
+                >
+                  Birebir
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setYeniKonusmaTuru("grup")}
+                  className={`focus-ring flex-1 rounded-lg px-3 py-2 text-sm ${yeniKonusmaTuru === "grup" ? "bg-brand-500 text-white" : "bg-canvas text-gray-600"}`}
+                >
+                  Grup oluştur
+                </button>
+              </div>
+              <p className="text-sm font-medium mb-2">{yeniKonusmaTuru === "grup" ? "Grup üyelerini seç" : "Kime mesaj göndereceksin?"}</p>
+              {yeniKonusmaTuru === "grup" && (
+                <input
+                  value={grupAdi}
+                  onChange={(e) => setGrupAdi(e.target.value)}
+                  placeholder="Grup adı (isteğe bağlı)"
+                  maxLength={80}
+                  className="focus-ring w-full rounded-xl border border-line px-3.5 py-2.5 text-sm mb-2"
+                />
+              )}
               <input
                 value={profilArama}
                 onChange={(e) => setProfilArama(e.target.value)}
@@ -158,12 +218,14 @@ function MesajlarIcerik() {
                 ) : filtrelenmisHedefler.length === 0 ? (
                   <p className="text-xs text-gray-500 py-2">Eşleşen kullanıcı yok.</p>
                 ) : (
-                  filtrelenmisHedefler.map((profil) => (
+                  filtrelenmisHedefler.map((profil) => {
+                    const secili = seciliAliciIds.includes(profil.id);
+                    return (
                     <button
                       key={profil.id}
                       type="button"
-                      onClick={() => yeniKonusmaBaslat(profil.id)}
-                      className="focus-ring w-full flex items-center gap-2 text-left rounded-lg px-2.5 py-2 hover:bg-canvas"
+                      onClick={() => yeniKonusmaTuru === "grup" ? grupUyesiDegistir(profil.id) : yeniKonusmaBaslat(profil.id)}
+                      className={`focus-ring w-full flex items-center gap-2 text-left rounded-lg px-2.5 py-2 hover:bg-canvas ${secili ? "bg-brand-50" : ""}`}
                     >
                       <span className="w-8 h-8 rounded-full bg-brand-50 text-brand-600 flex items-center justify-center text-xs font-semibold">
                         {(adSoyadBul(profil) || "?").charAt(0).toUpperCase()}
@@ -172,10 +234,17 @@ function MesajlarIcerik() {
                         <span className="block text-sm truncate">{adSoyadBul(profil) || profil.id}</span>
                         <span className="block text-[11px] text-gray-500">{ROL_ETIKET[profil.rol] || profil.rol}</span>
                       </span>
+                      {yeniKonusmaTuru === "grup" && <span className={`ml-auto w-5 h-5 rounded-md border flex items-center justify-center text-xs ${secili ? "bg-brand-500 text-white border-brand-500" : "border-line"}`}>{secili ? "✓" : ""}</span>}
                     </button>
-                  ))
+                    );
+                  })
                 )}
               </div>
+              {yeniKonusmaTuru === "grup" && (
+                <Buton tamGenislik className="mt-3" onClick={yeniGrupBaslat} disabled={seciliAliciIds.length < 2}>
+                  {seciliAliciIds.length < 2 ? "En az iki kişi seç" : `${seciliAliciIds.length} kişiyle grubu başlat`}
+                </Buton>
+              )}
             </Kart>
           )}
 
@@ -191,8 +260,12 @@ function MesajlarIcerik() {
           ) : (
             <div className="space-y-2">
               {konusmalar.map((konusma) => {
+                const grupMu = konusma.tur === "grup" || konusma.katilimcilar.length > 2;
                 const digerId = konusma.katilimcilar.find((id) => id !== kullanici.id) ?? "";
-                const digerAd = konusma.katilimciAdlari?.[digerId] || digerId;
+                const digerAdlari = konusma.katilimcilar
+                  .filter((id) => id !== kullanici.id)
+                  .map((id) => konusma.katilimciAdlari?.[id] || id);
+                const digerAd = grupMu ? (konusma.grupAdi || digerAdlari.join(", ")) : (konusma.katilimciAdlari?.[digerId] || digerId);
                 const okunmamisMesaj = konusma.okunmamisSayilari?.[kullanici.id] ?? 0;
                 return (
                   <button
@@ -204,7 +277,7 @@ function MesajlarIcerik() {
                     <Kart>
                       <div className="flex items-center gap-3">
                         <span className="w-10 h-10 rounded-full bg-brand-50 text-brand-600 flex items-center justify-center text-sm font-semibold shrink-0">
-                          {digerAd.charAt(0).toUpperCase()}
+                          {grupMu ? "👥" : digerAd.charAt(0).toUpperCase()}
                         </span>
                         <div className="min-w-0 flex-1">
                           <div className="flex items-center justify-between gap-2">
@@ -231,7 +304,11 @@ function MesajlarIcerik() {
               </div>
               <div className="min-w-0">
                 <p className="font-semibold text-sm truncate">{seciliBaslik}</p>
-                {seciliAlici && <p className="text-[11px] text-gray-500">{ROL_ETIKET[seciliAlici.rol] || seciliAlici.rol}</p>}
+                {seciliAlicilar.length > 1 ? (
+                  <p className="text-[11px] text-gray-500">{seciliAlicilar.length} katılımcı</p>
+                ) : seciliAlici ? (
+                  <p className="text-[11px] text-gray-500">{ROL_ETIKET[seciliAlici.rol] || seciliAlici.rol}</p>
+                ) : null}
               </div>
             </div>
 
@@ -264,11 +341,11 @@ function MesajlarIcerik() {
                 onChange={(e) => setGirdi(e.target.value)}
                 rows={1}
                 maxLength={2000}
-                placeholder={seciliAlici ? "Mesajını yaz…" : "Kullanıcı listesi yükleniyor…"}
+                placeholder={seciliAlicilar.length > 0 ? "Mesajını yaz…" : "Kullanıcı listesi yükleniyor…"}
                 className="focus-ring flex-1 resize-none rounded-xl border border-line px-3.5 py-2.5 text-sm"
-                disabled={!seciliAlici || gonderiliyor}
+                disabled={seciliAlicilar.length === 0 || gonderiliyor}
               />
-              <Buton type="submit" disabled={!seciliAlici || !girdi.trim() || gonderiliyor}>
+              <Buton type="submit" disabled={seciliAlicilar.length === 0 || !girdi.trim() || gonderiliyor}>
                 {gonderiliyor ? "…" : "Gönder"}
               </Buton>
             </form>

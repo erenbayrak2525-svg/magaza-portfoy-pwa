@@ -8,7 +8,7 @@ import { auth, firebaseYapilandirildi } from "@/lib/firebaseClient";
 import { useAuthStore } from "@/store/authStore";
 import { useFirestoreListesi, belgeYaz, belgeSil } from "@/lib/firestoreOkuma";
 import { adSoyadBul } from "@/lib/adSoyadBul";
-import { bildirimIzniniAc } from "@/lib/fcm";
+import { bildirimIzniniAc, webPushDurumu } from "@/lib/fcm";
 import type { Kullanici } from "@/types";
 import Kart from "@/components/ui/Kart";
 import Buton from "@/components/ui/Buton";
@@ -50,6 +50,8 @@ export default function ProfilSayfasi() {
   useEffect(() => {
     setBildirimIznini(typeof Notification === "undefined" ? "unsupported" : Notification.permission);
   }, []);
+
+  const pushDurumu = webPushDurumu();
 
   function duzenlemeyeBasla(uye: Kullanici) {
     setDuzenlenenId(uye.id);
@@ -155,11 +157,19 @@ export default function ProfilSayfasi() {
             <Buton
               varyant={bildirimIzni === "granted" ? "ikincil" : "birincil"}
               onClick={bildirimleriAc}
-              disabled={bildirimAciliyor || bildirimIzni === "granted" || bildirimIzni === "unsupported"}
+              disabled={bildirimAciliyor || bildirimIzni === "granted" || pushDurumu !== "hazir"}
             >
               {bildirimAciliyor ? "Açılıyor…" : bildirimIzni === "granted" ? "Açık" : "Bildirimleri Aç"}
             </Buton>
           </div>
+          {pushDurumu === "vapid_eksik" && (
+            <p className="text-xs text-signal-late mt-2">
+              Bildirim için GitHub Actions Secrets bölümünde <code>NEXT_PUBLIC_FIREBASE_VAPID_KEY</code> adıyla Web Push anahtarını ekleyip yeniden derleme yapmalısın.
+            </p>
+          )}
+          {pushDurumu === "tarayici_desteklemiyor" && (
+            <p className="text-xs text-gray-500 mt-2">Bu tarayıcı web push için uygun değil. HTTPS üzerinde Chrome/Edge veya Android PWA kullan.</p>
+          )}
           {bildirimMesaji && <p className="text-xs text-gray-500 mt-2">{bildirimMesaji}</p>}
         </Kart>
       )}

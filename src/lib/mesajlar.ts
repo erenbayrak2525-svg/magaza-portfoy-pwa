@@ -18,6 +18,13 @@ export function mesajKonusmaIdsi(ilki: string, ikincisi: string): string {
   return [ilki, ikincisi].sort().join("__");
 }
 
+export function yeniGrupKonusmaIdsi(): string {
+  const rastgele = typeof crypto !== "undefined" && "randomUUID" in crypto
+    ? crypto.randomUUID()
+    : `${Date.now()}_${Math.random().toString(36).slice(2, 10)}`;
+  return `grup_${rastgele}`;
+}
+
 export function useCanliMesajKonusmalari(kullaniciId?: string) {
   const [veri, setVeri] = useState<MesajKonusmasi[]>([]);
   const [yukleniyor, setYukleniyor] = useState(Boolean(kullaniciId && firebaseYapilandirildi));
@@ -107,16 +114,26 @@ export async function mesajGonder({
   gonderenAdi,
   aliciId,
   aliciAdi,
+  aliciIds,
+  aliciAdlari,
   icerik,
-  mevcutKonusma
+  mevcutKonusma,
+  tur,
+  grupAdi
 }: {
   konusmaId: string;
   gonderenId: string;
   gonderenAdi: string;
-  aliciId: string;
-  aliciAdi: string;
+  /** Birebir konuşmalar için geriye dönük alanlar. */
+  aliciId?: string;
+  aliciAdi?: string;
+  /** Grup konuşmalarında gönderilecek tüm kullanıcılar. */
+  aliciIds?: string[];
+  aliciAdlari?: Record<string, string>;
   icerik: string;
   mevcutKonusma?: MesajKonusmasi;
+  tur?: "birebir" | "grup";
+  grupAdi?: string;
 }) {
   if (!firebaseYapilandirildi) throw new Error("Mesajlaşma için Firebase bağlantısı gerekli.");
 
@@ -124,9 +141,19 @@ export async function mesajGonder({
   if (!temizIcerik) throw new Error("Mesaj boş olamaz.");
   if (temizIcerik.length > 2000) throw new Error("Mesaj en fazla 2000 karakter olabilir.");
 
+  const hedefIds = [...new Set((aliciIds ?? (aliciId ? [aliciId] : [])).filter((id) => id && id !== gonderenId))];
+  if (hedefIds.length === 0) throw new Error("Mesaj gönderilecek kullanıcı seçilmedi.");
+
   const zaman = new Date().toISOString();
   const konusmaRef = doc(db, "mesaj_konusmalari", konusmaId);
   const mesajRef = doc(collection(konusmaRef, "mesajlar"));
+  const konusmaTuru = tur ?? mevcutKonusma?.tur ?? (hedefIds.length > 1 ? "grup" : "birebir");
+  const hedefAdlari = {
+    ...(aliciAdlari ?? {}),
+    ...(aliciId && aliciAdi ? { [aliciId]: aliciAdi } : {})
+  };
+  const katilimcilar = [...new Set([gonderenId, ...hedefIds])].sort();
+  const grupBasligi = grupAdi?.trim() || mevcutKonusma?.grupAdi || "Ekip grubu";
 
   await runTransaction(db, async (transaction) => {
     const mevcutBelge = await transaction.get(konusmaRef);
@@ -134,18 +161,25 @@ export async function mesajGonder({
       ? (mevcutBelge.data() as Omit<MesajKonusmasi, "id">)
       : mevcutKonusma;
     const okunmamisSayilari = { ...(mevcut?.okunmamisSayilari ?? {}) };
-    okunmamisSayilari[gonderenId] = 0;
-    okunmamisSayilari[aliciId] = (okunmamisSayilari[aliciId] ?? 0) + 1;
+    for (const katilimciId of katilimcilar) {
+      okunmamisSayilari[katilimciId] = katilimciId === gonderenId
+        ? 0
+        : (okunmamisSayilari[katilimciId] ?? 0) + 1;
+    }
 
     transaction.set(
       konusmaRef,
       {
-        katilimcilar: [gonderenId, aliciId].sort(),
+        katilimcilar,
         katilimciAdlari: {
           ...(mevcut?.katilimciAdlari ?? {}),
           [gonderenId]: gonderenAdi,
-          [aliciId]: aliciAdi
+          ...Object.fromEntries(
+            hedefIds.map((id) => [id, hedefAdlari[id] || id])
+          )
         },
+        tur: konusmaTuru,
+        ...(konusmaTuru === "grup" ? { grupAdi: grupBasligi } : {}),
         sonMesaj: temizIcerik,
         sonMesajTarihi: zaman,
         olusturmaTarihi: mevcut?.olusturmaTarihi ?? zaman,
@@ -161,11 +195,15 @@ export async function mesajGonder({
     });
   });
 
-  await bildirimGonder(
-    aliciId,
-    `Yeni mesaj: ${gonderenAdi}`,
-    temizIcerik.slice(0, 140),
-    `/mesajlar?konusma=${encodeURIComponent(konusmaId)}`
+  await Promise.all(
+    hedefIds.map((hedefId) =>
+      bildirimGonder(
+        hedefId,
+        konusmaTuru === "grup" ? `Yeni mesaj: ${grupBasligi}` : `Yeni mesaj: ${gonderenAdi}`,
+        temizIcerik.slice(0, 140),
+        `/mesajlar?konusma=${encodeURIComponent(konusmaId)}`
+      )
+    )
   );
 }
 

@@ -165,6 +165,8 @@ export interface MesajKonusmasi {
   id: string;
   katilimcilar: string[];
   katilimciAdlari: Record<string, string>;
+  tur?: "birebir" | "grup";
+  grupAdi?: string;
   sonMesaj?: string;
   sonMesajTarihi?: string;
   olusturmaTarihi: string;

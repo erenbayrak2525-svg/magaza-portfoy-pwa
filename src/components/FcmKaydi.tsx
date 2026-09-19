@@ -2,7 +2,7 @@
 
 import { useEffect } from "react";
 import { useAuthStore } from "@/store/authStore";
-import { fcmTokeniniKaydet } from "@/lib/fcm";
+import { fcmOnMesajDinleyicisiniKur, fcmTokeniniKaydet } from "@/lib/fcm";
 
 /** Daha önce bildirim izni verilmiş cihazlarda tokenı sessizce yeniler. */
 export default function FcmKaydi() {
@@ -10,7 +10,19 @@ export default function FcmKaydi() {
 
   useEffect(() => {
     if (!kullanici || typeof Notification === "undefined" || Notification.permission !== "granted") return;
+
+    let iptal = false;
+    let temizle = () => {};
     fcmTokeniniKaydet(kullanici.id).catch(() => {});
+    fcmOnMesajDinleyicisiniKur().then((unsubscribe) => {
+      if (iptal) unsubscribe();
+      else temizle = unsubscribe;
+    }).catch(() => {});
+
+    return () => {
+      iptal = true;
+      temizle();
+    };
   }, [kullanici]);
 
   return null;
